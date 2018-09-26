@@ -8,7 +8,7 @@ Jpeg mnist images can be found at this [link](https://www.kaggle.com/scolianni/m
 It is useful to set up an account on kaggle and to use the kaggle API to download the data set.
 
 ## Setting up a kaggle account
-Once you have set up a kaggle account, go to "my profile" > profile > click on "create a new API token". This will automatically start a download of a json file called kaggle.json
+Once you have set up a kaggle account, go to "my profile" > "profile" > click on "create a new API token". This will automatically start a download of a json file called kaggle.json
 Move this to your home directory under the directory name ".kaggle"
 
 ```
