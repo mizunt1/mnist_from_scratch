@@ -1,4 +1,4 @@
-# mnist_from_scratch
+# mnist from scratch
 This repository contains code which categorise a set of mnist jpegs in to their 10 categories.
 
 ## Data
