@@ -1,5 +1,5 @@
 # mnist from scratch
-This repository contains code which categorise a set of mnist jpegs in to their 10 categories using a neural network written in python.
+This repository contains code to categorise a set of mnist jpegs in to their 10 categories using a neural network written in python.
 
 ## Data
 In the spirit of doing things from scratch, the starting point of this project is jpegs, which is one of the most widely used image formats.
