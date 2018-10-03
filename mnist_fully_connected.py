@@ -1,6 +1,9 @@
 # First task would be to build a network, and pass in one image
 # and perform back prop just on that image and change the weights once.
 # this will help for back prop https://www.youtube.com/watch?v=tIeHLnjs5U8
+# https://www.cl.cam.ac.uk/archive/mjcg/plans/Backpropagation.html
+# http://neuralnetworksanddeeplearning.com/chap2.html
+# next time, go through Nielsen material above and implement back prop and add in biases
 
 import numpy as np
 import mnist_tools as mt
