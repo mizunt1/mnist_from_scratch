@@ -23,10 +23,33 @@ def weight_2d(y, x, low=-1, high=1):
     return matrix
 
 
+def bias(y, low=-1, high=1):
+    """
+    creates a randomised bias vector
+    """
+    vector = np.random.uniform(low=low, high=high, size=(y))
+    return vector
+
+
 def sigmoid(x):
     y = (1+np.exp(-x))**-1
     return y
 
 
-if __name__=="__main__":
+def dsigmoid(x):
+    y = sigmoid(x)*(1-sigmoid(x))
+    return y
+
+
+def ce_loss(output, target):
+    loss = (np.log(output) + (1-target) * np.log(1 - output))*-1
+    return loss
+
+
+def d_ce_loss(output, target):
+    d = -1*((target * (1/output)) + ((1 - target) * (1/(1 - output))))
+    return d
+
+
+if __name__ == "__main__":
     print(get_pixels("data/testSample/img_347.jpg"))

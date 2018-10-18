@@ -17,21 +17,33 @@ output_len = 10
 pixel_file = "data/trainingSet/0/img_41637.jpg"
 pixels = mt.get_pixels(pixel_file).flatten()
 sigmoid_vec = np.vectorize(mt.sigmoid)
+
+# example hypothetical target
 one_hot = np.array([0 for i in range(10)])
 one_hot[0] = 1
 
 layer1_weight = mt.weight_2d(input_len, layer1_len)
 layer2_weight = mt.weight_2d(layer1_len, layer2_len)
 output_weight = mt.weight_2d(layer2_len, output_len)
-# must add biases
+
+# biases
+layer1_bias = mt.bias(layer1_len)
+layer2_bias = mt.bias(layer2_len)
+output_bias = mt.bias(output_len)
 
 # model
-
 layer1_out = sigmoid_vec(np.matmul(pixels, layer1_weight))
 layer2_out = sigmoid_vec(np.matmul(layer1_out, layer2_weight))
 final_out = sigmoid_vec(np.matmul(layer2_out, output_weight))
 
+
 print(final_out)
 print(one_hot)
-loss = (final_out - one_hot)**2
-print(loss)
+loss = ((final_out - one_hot)**2)**0.5
+loss_ave = np.average(loss)
+
+loss_vec = np.vectorize(mt.ce_loss)
+c_e_loss = mt.ce_loss(final_out, one_hot)
+c_e_ave = np.average(c_e_loss)
+print(loss_ave)
+print(c_e_ave)
