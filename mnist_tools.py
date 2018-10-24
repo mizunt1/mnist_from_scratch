@@ -50,6 +50,70 @@ def d_ce_loss(output, target):
     d = -1*((target * (1/output)) + ((1 - target) * (1/(1 - output))))
     return d
 
+def softmax(vector):
+    """
+    Input a vector of dimension n, output vector of dimension n
+    after applying the softmax fn.
+    :params vector: n dimensional np.array vector
+    """
+    output = np.zeors(len(vector))
+    denom = 0
+    for i in range(len(vector)):
+        denom += np.exp(a[i])
+    for i in range(len(a)):
+        output[i] = np.exp(a[i])
+    return output
+
+def dsoftmax(vector):
+    """
+    value of differential of softmax at those vectors
+    """
+    output = np.zeros(len(vector))
+    for i in range(len(vectors)):
+        denom += np.exp()
+    for i in range(len(vector)):
+        num = (vector[i] * (np.sum(vector) - vector[i]))/denom
+        output[i] = num
+    return output
+
+def hidden_to_final(weights, biases, activation_vals, activation_fn='softmax'):
+    """
+    Outputs the optimised weight values for the hidden to final layer of the
+    network. The weights should then be replaced by the output of this fn
+    :params weights: 2D weights matrix of the current weights which are under 
+     optimisation should be of dimensions (prev number of nodes, current number of nodes)
+    :params biases: 1D vector of biases (current number of nodes)
+    :params activation vals: 1D vector, output of the previous layer. (prev number of
+     nodes)
+    :params activation_fn: activation function in operation on this layer
+    :returns: updated weights which should be used to optimise network
+    """
+
+def loss(target, input):
+    """
+    input target vector and input vector and calculate the cross entropy loss
+    :params target: target vector n dimensional vector of targets
+    :params input: input vector of n dimensional vector of inputs 
+    :returns: n dimensional vector of loss
+    """
+    loss = np.zeros(len(input)):
+    for i in range(len(input)):
+        loss[i] = -1*(target[i]*np.log(input[i]) + (1-target[i])*np.log(1-input[i]))
+    return loss
+
+def dloss(target, input):
+    """
+    calculates differential of cross entropy loss at those values in the input vector
+    :params target: target vector, n dimensional vector
+    :params input: target vector, n dimensional vector
+    :returns: An n dimensional vector
+    """
+    loss = np.zeros(len(input)):
+    for i in range(len(input)):
+        loss[i] = -1*(target[i]*(1/input[i]) + (1-target[i])*(1/(1-input[i])))
+    return loss
+
+    
 
 if __name__ == "__main__":
     print(get_pixels("data/testSample/img_347.jpg"))
