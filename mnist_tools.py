@@ -76,19 +76,6 @@ def dsoftmax(vector):
         output[i] = num
     return output
 
-def hidden_to_final(weights, biases, activation_vals, activation_fn='softmax'):
-    """
-    Outputs the optimised weight values for the hidden to final layer of the
-    network. The weights should then be replaced by the output of this fn
-    :params weights: 2D weights matrix of the current weights which are under 
-     optimisation should be of dimensions (prev number of nodes, current number of nodes)
-    :params biases: 1D vector of biases (current number of nodes)
-    :params activation vals: 1D vector, output of the previous layer. (prev number of
-     nodes)
-    :params activation_fn: activation function in operation on this layer
-    :returns: updated weights which should be used to optimise network
-    """
-
 def loss(target, input):
     """
     input target vector and input vector and calculate the cross entropy loss
@@ -112,6 +99,32 @@ def dloss(target, input):
     for i in range(len(input)):
         loss[i] = -1*(target[i]*(1/input[i]) + (1-target[i])*(1/(1-input[i])))
     return loss
+
+def hidden_to_final(weights, biases, output_vals_h, output_vals_f, target_vals):
+    """
+    Outputs the optimised weight values for the hidden to final layer of the
+    network. The weights should then be replaced by the output of this fn
+    :params weights: 2D weights matrix of the current weights which are under 
+     optimisation should be of dimensions (prev number of nodes, current number of nodes)
+    :params biases: 1D vector of biases (current number of nodes)
+    :params output_vals_h: 1D vector, output of the hidden layer. (prev number of
+     nodes)
+    :params output_vals_f: 1D vector, output of final layer.
+    :params target_vals: vector of target values 1D.
+    :returns: updated weights which should be used to optimise network
+    """
+    
+    dEz_dOz = dloss(target,output_vals_f)
+    dOoutz_dOinz = dsoftmax(output_vals_h)
+    dOinz_Wyz = np.zeros((len(output_vals_h), len(output_vals_f)))
+    for i in range(len(output_vals_h)):
+        for j in range(len(output_vals_f)):
+            dOinz_Wyz[j] = output_vals_h[i]
+    # element wise multiplication of first two terms calculated
+    first_two = np.multiply(dEz_dOz, dOoutz_dOinz)
+    first_two_reshaped = np.reshape(first_two, (-1,1))
+    output = np.multiply(first_two_reshaped, dOinz_Wyz)
+    
 
     
 
