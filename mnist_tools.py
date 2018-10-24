@@ -30,25 +30,19 @@ def bias(y, low=-1, high=1):
     vector = np.random.uniform(low=low, high=high, size=(y))
     return vector
 
-
 def sigmoid(x):
-    y = (1+np.exp(-x))**-1
-    return y
+    output = np.zeros(len(x))
+    for i in range(len(x)):
+        output[i] = (1+np.exp(-x[i]))**-1
+    return output
 
 
 def dsigmoid(x):
-    y = sigmoid(x)*(1-sigmoid(x))
-    return y
+    output = np.zeros(len(x))
+    for i in range(len(x)):
+        output[i] = sigmoid(x[i])*(1-sigmoid(x[i]))
+    return output
 
-
-def ce_loss(output, target):
-    loss = (np.log(output) + (1-target) * np.log(1 - output))*-1
-    return loss
-
-
-def d_ce_loss(output, target):
-    d = -1*((target * (1/output)) + ((1 - target) * (1/(1 - output))))
-    return d
 
 def softmax(vector):
     """
@@ -100,10 +94,12 @@ def dloss(target, input):
         loss[i] = -1*(target[i]*(1/input[i]) + (1-target[i])*(1/(1-input[i])))
     return loss
 
-def hidden_to_final(weights, biases, output_vals_h, output_vals_f, target_vals, lr):
+def hidden_to_final(weights, biases, output_vals_h, output_vals_f, target_vals, lr=0.01):
     """
     Outputs the optimised weight values for the hidden to final layer of the
     network. The weights should then be replaced by the output of this fn
+    Assumed softmax is used in final layer. TODO: Change this to supply options
+    for different activation fns
     :params weights: 2D weights matrix of the current weights which are under 
      optimisation should be of dimensions (prev number of nodes, current number of nodes)
     :params biases: 1D vector of biases (current number of nodes)
@@ -111,6 +107,7 @@ def hidden_to_final(weights, biases, output_vals_h, output_vals_f, target_vals, 
      nodes)
     :params output_vals_f: 1D vector, output of final layer.
     :params target_vals: vector of target values 1D.
+    :params lr: learning rate
     :returns: updated weights which should be used to optimise network
     """
     
