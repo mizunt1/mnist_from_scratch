@@ -113,17 +113,27 @@ def hidden_to_final(weights, biases, output_vals_h, output_vals_f, target_vals, 
     
     dEz_dOz = dloss(target,output_vals_f)
     dOoutz_dOinz = dsoftmax(output_vals_h)
-    dOinz_Wyz = np.zeros((len(output_vals_h), len(output_vals_f)))
+    dOinz_dWyz = np.zeros((len(output_vals_h), len(output_vals_f)))
     for i in range(len(output_vals_h)):
         for j in range(len(output_vals_f)):
-            dOinz_Wyz[j] = output_vals_h[i]
+            dOinz_dWyz[j] = output_vals_h[i]
     # element wise multiplication of first two terms calculated
     first_two = np.multiply(dEz_dOz, dOoutz_dOinz)
     first_two_reshaped = np.reshape(first_two, (-1,1))
-    dw = np.multiply(first_two_reshaped, dOinz_Wyz)
+    dw = np.multiply(first_two_reshaped, dOinz_dWyz)
     new_weights = weights - lr*dw
     return new_weights
 
+def hidden_1_to_hidden_2(weights, biases, output_vals_h1, output_vals_h2, lr=0.01):
+    dh2Oy_dh2outy = dsoftmax(output_vals_h1)
+    dh2iny_dWxy = np.zeros((len(output_vals_h1), len(output_vals_h2)))
+    for i in range(len(output_vals_h1)):
+        for j in range(len(output_vals_h2)):
+            dh2iny_dWxy[j] = output_vals_h1[i]
+            
+    # element wise multiplication of first two terms calculate
+    
+    
     
 
 if __name__ == "__main__":
