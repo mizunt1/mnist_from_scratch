@@ -100,7 +100,7 @@ def dloss(target, input):
         loss[i] = -1*(target[i]*(1/input[i]) + (1-target[i])*(1/(1-input[i])))
     return loss
 
-def hidden_to_final(weights, biases, output_vals_h, output_vals_f, target_vals):
+def hidden_to_final(weights, biases, output_vals_h, output_vals_f, target_vals, lr):
     """
     Outputs the optimised weight values for the hidden to final layer of the
     network. The weights should then be replaced by the output of this fn
@@ -123,8 +123,9 @@ def hidden_to_final(weights, biases, output_vals_h, output_vals_f, target_vals):
     # element wise multiplication of first two terms calculated
     first_two = np.multiply(dEz_dOz, dOoutz_dOinz)
     first_two_reshaped = np.reshape(first_two, (-1,1))
-    output = np.multiply(first_two_reshaped, dOinz_Wyz)
-    
+    dw = np.multiply(first_two_reshaped, dOinz_Wyz)
+    new_weights = weights - lr*dw
+    return new_weights
 
     
 
