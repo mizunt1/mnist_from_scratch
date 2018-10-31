@@ -77,7 +77,7 @@ def loss(target, input):
     :params input: input vector of n dimensional vector of inputs 
     :returns: n dimensional vector of loss
     """
-    loss = np.zeros(len(input)):
+    loss = np.zeros(len(input))
     for i in range(len(input)):
         loss[i] = -1*(target[i]*np.log(input[i]) + (1-target[i])*np.log(1-input[i]))
     return loss
@@ -89,12 +89,12 @@ def dloss(target, input):
     :params input: target vector, n dimensional vector
     :returns: An n dimensional vector
     """
-    loss = np.zeros(len(input)):
+    loss = np.zeros(len(input))
     for i in range(len(input)):
         loss[i] = -1*(target[i]*(1/input[i]) + (1-target[i])*(1/(1-input[i])))
     return loss
 
-def hidden_to_final(weights, biases, output_vals_h, output_vals_f, target_vals, lr=0.01):
+def hidden_to_final(weights, output_vals_h, output_vals_f, target_vals, lr=0.01):
     """
     Outputs the optimised weight values for the hidden to final layer of the
     network. The weights should then be replaced by the output of this fn
@@ -124,7 +124,7 @@ def hidden_to_final(weights, biases, output_vals_h, output_vals_f, target_vals, 
     new_weights = weights - lr*dw
     return new_weights
 
-def hidden_1_to_hidden_2(weights, weightyz, biases, input_vals_h1, output_vals_h1
+def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1,
                          output_vals_h2, input_vals_O, output_vals_0, lr=0.01):
     dh2Oy_dh2iny = dsoftmax(input_vals_h1)
     dh2iny_dWxy = np.zeros((len(output_vals_h1), len(output_vals_h2)))
@@ -136,8 +136,8 @@ def hidden_1_to_hidden_2(weights, weightyz, biases, input_vals_h1, output_vals_h
     dOout1_dOin1 = dsoftmax(input_vals_O)
     mult_with_w = np.multiply(dE1_dOouty, dOout1_dOin1)
     mult_with_w_reshaped = np.reshape(mult_with_w, (-1,1))
-    2d_to_be_1d = np.multiply(weightyz, mult_with_w_reshaped)
-    dEtotal_h2outy = np.sum(2d_to_be_1d, axis=1)
+    to_be_1d = np.multiply(weightyz, mult_with_w_reshaped)
+    dEtotal_h2outy = np.sum(to_be_1d, axis=1)
     dEtotal_h2outy = np.reshape(dEtotal_h2outy, (-1,1))
     first_two_terms = np.multiply(dh2Oy_dh2iny, dEtotal_h2outy)
     dw = np.multiply(dh2iny_dWxy, first_two_terms)
@@ -155,7 +155,7 @@ def input_to_hidden_1(weights, weightxy, output_vals_I, input_vals_h2, input_val
     dh1inx_dWwx = np.rollaxis(output_vals_I_2d, 1)
     Wxx = np.zeros(len(weightxy))
     # not entirely sure if this following bit is correct
-    for i in range len(weightxy):
+    for i in range(len(weightxy)):
         Wxx[i] = weightxy[i][i]
     Wxx = np.reshape(Wxx, (-1,1))
     dh2outy_dh2iny = dsigmoid(input_vals_h2)
@@ -170,4 +170,4 @@ def input_to_hidden_1(weights, weightxy, output_vals_I, input_vals_h2, input_val
 
 if __name__ == "__main__":
     print(get_pixels("data/testSample/img_347.jpg"))
-B
+
