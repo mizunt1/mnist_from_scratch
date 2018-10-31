@@ -124,17 +124,50 @@ def hidden_to_final(weights, biases, output_vals_h, output_vals_f, target_vals, 
     new_weights = weights - lr*dw
     return new_weights
 
-def hidden_1_to_hidden_2(weights, biases, output_vals_h1, output_vals_h2, lr=0.01):
-    dh2Oy_dh2outy = dsoftmax(output_vals_h1)
+def hidden_1_to_hidden_2(weights, weightyz, biases, input_vals_h1, output_vals_h1
+                         output_vals_h2, input_vals_O, output_vals_0, lr=0.01):
+    dh2Oy_dh2iny = dsoftmax(input_vals_h1)
     dh2iny_dWxy = np.zeros((len(output_vals_h1), len(output_vals_h2)))
     for i in range(len(output_vals_h1)):
         for j in range(len(output_vals_h2)):
             dh2iny_dWxy[j] = output_vals_h1[i]
-            
+    #dEtotal_h2outy vector of len y
+    dE1_dOouty = dsigmoid(output_vals_O)
+    dOout1_dOin1 = dsoftmax(input_vals_O)
+    mult_with_w = np.multiply(dE1_dOouty, dOout1_dOin1)
+    mult_with_w_reshaped = np.reshape(mult_with_w, (-1,1))
+    2d_to_be_1d = np.multiply(weightyz, mult_with_w_reshaped)
+    dEtotal_h2outy = np.sum(2d_to_be_1d, axis=1)
+    dEtotal_h2outy = np.reshape(dEtotal_h2outy, (-1,1))
+    first_two_terms = np.multiply(dh2Oy_dh2iny, dEtotal_h2outy)
+    dw = np.multiply(dh2iny_dWxy, first_two_terms)
+    new_weights = weights - lr*dw
+    return new_weights, dEtotal_h2outy
     # element wise multiplication of first two terms calculate
     
-    
+def input_to_hidden_1(weights, weightxy, output_vals_I, input_vals_h2, input_vals_h1,
+                      dEtotal_h2outy, lr=0.01):
+    # relu activation
+    dh1outx_dh1inx= np.ones(len(input_vals_h1))
+    dh1outx_dh1inx = np.reshape(dh1outx_dh1inx, (-1,1))
+    dh1inx_dWwx = output_vals_I
+    output_vals_I_2d = np.concatenate((output_vals_I, output_vals_I, output_vals_I))
+    dh1inx_dWwx = np.rollaxis(output_vals_I_2d, 1)
+    Wxx = np.zeros(len(weightxy))
+    # not entirely sure if this following bit is correct
+    for i in range len(weightxy):
+        Wxx[i] = weightxy[i][i]
+    Wxx = np.reshape(Wxx, (-1,1))
+    dh2outy_dh2iny = dsigmoid(input_vals_h2)
+    dh2outy_dh2iny = np.reshape(dh2outy_dh2iny, (-1, 1))
+    dEtotal_dh1outx = np.multiply(dEtotal_h2outy, dh2outy_dh2iny, Wxx)
+    first_two = np.multiply(dEtotal_dh1outx, dh1outx_dh1inx)
+    first_two = np.reshape(first_two, (-1,1))
+    dw = np.multiply(dh1inx_dWwx, first_two)
+    new_weights = weights - lr*dw
+    return new_weights
     
 
 if __name__ == "__main__":
     print(get_pixels("data/testSample/img_347.jpg"))
+B
