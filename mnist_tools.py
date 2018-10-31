@@ -13,6 +13,14 @@ def get_pixels(file_name):
     pixels = np.reshape(pixels, (width, height))
     return pixels
 
+def relu(x):
+    output = np.zeros(len(x))
+    for i in range(len(x)):
+        if x <0 :
+            output[i] = 0
+        else:
+            output[i] = i
+    return output
 
 def weight_2d(y, x, low=-1, high=1):
     """
@@ -94,7 +102,7 @@ def dloss(target, input):
         loss[i] = -1*(target[i]*(1/input[i]) + (1-target[i])*(1/(1-input[i])))
     return loss
 
-def hidden_to_final(weights, output_vals_h, output_vals_f, target_vals, lr=0.01):
+def hidden_to_final(weights, output_vals_h2, output_vals_f, target_vals, lr=0.01):
     """
     Outputs the optimised weight values for the hidden to final layer of the
     network. The weights should then be replaced by the output of this fn
@@ -112,11 +120,11 @@ def hidden_to_final(weights, output_vals_h, output_vals_f, target_vals, lr=0.01)
     """
     
     dEz_dOz = dloss(target,output_vals_f)
-    dOoutz_dOinz = dsoftmax(output_vals_h)
-    dOinz_dWyz = np.zeros((len(output_vals_h), len(output_vals_f)))
-    for i in range(len(output_vals_h)):
+    dOoutz_dOinz = dsoftmax(output_vals_h2)
+    dOinz_dWyz = np.zeros((len(output_vals_h2), len(output_vals_f)))
+    for i in range(len(output_vals_h2)):
         for j in range(len(output_vals_f)):
-            dOinz_dWyz[j] = output_vals_h[i]
+            dOinz_dWyz[j] = output_vals_h2[i]
     # element wise multiplication of first two terms calculated
     first_two = np.multiply(dEz_dOz, dOoutz_dOinz)
     first_two_reshaped = np.reshape(first_two, (-1,1))
