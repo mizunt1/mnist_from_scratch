@@ -109,7 +109,7 @@ def dloss(target, input):
         loss[i] = -1*(target[i]*(1/input[i]) + (1-target[i])*(1/(1-input[i])))
     return loss
 
-def hidden_to_final(weights, output_vals_h2, output_vals_f, target_vals, lr=0.01):
+def hidden_to_final(weights, output_vals_h2, output_vals_f, out_layer_in, target_vals, lr=0.01):
     """
     Outputs the optimised weight values for the hidden to final layer of the
     network. The weights should then be replaced by the output of this fn
@@ -127,17 +127,22 @@ def hidden_to_final(weights, output_vals_h2, output_vals_f, target_vals, lr=0.01
     """
 
     dEz_dOz = dloss(target_vals, output_vals_f)
-    dOoutz_dOinz = dsoftmax(output_vals_h2)
+    dOoutz_dOinz = dsoftmax(out_layer_in)
     dOinz_dWyz = np.zeros((len(output_vals_h2), len(output_vals_f)))
     for i in range(len(output_vals_h2)):
         for j in range(len(output_vals_f)):
             dOinz_dWyz[j] = output_vals_h2[i]
     # element wise multiplication of first two terms calculated
+    print("shape dEz_dOz", dEz_dOz.shape)
+    print("shape dOoutz_dOinz", dOoutz_dOinz.shape)
     first_two = np.multiply(dEz_dOz, dOoutz_dOinz)
-    first_two_reshaped = np.reshape(first_two, (-1,1))
+    first_two_reshaped = np.reshape(first_two, (1,-1))
+    print("first_two_reshaped.shape", first_two_reshaped.shape)
     dw = np.multiply(first_two_reshaped, dOinz_dWyz)
+    print("dw shape", dw.shape)
     new_weights = weights - lr*dw
     return new_weights
+
 
 def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1,
                          output_vals_h2, input_vals_O, output_vals_O, lr=0.01):
@@ -147,6 +152,7 @@ def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1,
         for j in range(len(output_vals_h2)):
             dh2iny_dWxy[j] = output_vals_h1[i]
     #dEtotal_h2outy vector of len y
+    print("output vals O", output_vals_O)
     dE1_dOouty = dsigmoid(output_vals_O)
     dOout1_dOin1 = dsoftmax(input_vals_O)
     mult_with_w = np.multiply(dE1_dOouty, dOout1_dOin1)

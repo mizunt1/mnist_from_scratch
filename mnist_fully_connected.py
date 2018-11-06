@@ -82,7 +82,7 @@ def run_back_prop(iterations, input_data, target, starting_weights):
             h2_to_out_weight)
 
         new_h2_to_out_weights = mt.hidden_to_final(
-            h2_to_out_weight, h2_out, out_layer_out, target)
+            h2_to_out_weight, h2_out, out_layer_out, out_layer_in, target)
         new_h1_to_h2_weights, dEtotal_h2outy = mt.hidden_1_to_hidden_2(
             h1_to_h2_weight, h2_to_out_weight, h1_in, h1_out, h2_out, out_layer_in, out_layer_out)
         new_input_to_h1_weight = mt.input_to_hidden_1(
