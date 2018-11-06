@@ -13,6 +13,7 @@ def get_pixels(file_name):
     pixels = np.reshape(pixels, (width, height))
     return pixels
 
+
 def relu(x):
     output = np.zeros(len(x))
     for i in range(len(x)):
@@ -21,6 +22,7 @@ def relu(x):
         else:
             output[i] = i
     return output
+
 
 def weight_2d(y, x, low=-1, high=1):
     """
@@ -37,6 +39,7 @@ def bias(y, low=-1, high=1):
     """
     vector = np.random.uniform(low=low, high=high, size=(y))
     return vector
+
 
 def sigmoid(x):
     output = np.zeros(len(x))
@@ -61,34 +64,37 @@ def softmax(vector):
     output = np.zeors(len(vector))
     denom = 0
     for i in range(len(vector)):
-        denom += np.exp(a[i])
-    for i in range(len(a)):
-        output[i] = np.exp(a[i])
+        denom += np.exp(vector[i])
+    for i in range(len(vector)):
+        output[i] = np.exp(vector[i])
     return output
+
 
 def dsoftmax(vector):
     """
     value of differential of softmax at those vectors
     """
     output = np.zeros(len(vector))
-    for i in range(len(vectors)):
+    for i in range(len(vector)):
         denom += np.exp()
     for i in range(len(vector)):
         num = (vector[i] * (np.sum(vector) - vector[i]))/denom
         output[i] = num
     return output
 
+
 def loss(target, input):
     """
     input target vector and input vector and calculate the cross entropy loss
     :params target: target vector n dimensional vector of targets
-    :params input: input vector of n dimensional vector of inputs 
+    :params input: input vector of n dimensional vector of inputs
     :returns: n dimensional vector of loss
     """
     loss = np.zeros(len(input))
     for i in range(len(input)):
         loss[i] = -1*(target[i]*np.log(input[i]) + (1-target[i])*np.log(1-input[i]))
     return loss
+
 
 def dloss(target, input):
     """
@@ -108,7 +114,7 @@ def hidden_to_final(weights, output_vals_h2, output_vals_f, target_vals, lr=0.01
     network. The weights should then be replaced by the output of this fn
     Assumed softmax is used in final layer. TODO: Change this to supply options
     for different activation fns
-    :params weights: 2D weights matrix of the current weights which are under 
+    :params weights: 2D weights matrix of the current weights which are under
      optimisation should be of dimensions (prev number of nodes, current number of nodes)
     :params biases: 1D vector of biases (current number of nodes)
     :params output_vals_h: 1D vector, output of the hidden layer. (prev number of
@@ -118,7 +124,7 @@ def hidden_to_final(weights, output_vals_h2, output_vals_f, target_vals, lr=0.01
     :params lr: learning rate
     :returns: updated weights which should be used to optimise network
     """
-    
+
     dEz_dOz = dloss(target,output_vals_f)
     dOoutz_dOinz = dsoftmax(output_vals_h2)
     dOinz_dWyz = np.zeros((len(output_vals_h2), len(output_vals_f)))
@@ -152,7 +158,7 @@ def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1,
     new_weights = weights - lr*dw
     return new_weights, dEtotal_h2outy
     # element wise multiplication of first two terms calculate
-    
+
 def input_to_hidden_1(weights, weightxy, output_vals_I, input_vals_h2, input_vals_h1,
                       dEtotal_h2outy, lr=0.01):
     # relu activation
@@ -174,8 +180,7 @@ def input_to_hidden_1(weights, weightxy, output_vals_I, input_vals_h2, input_val
     dw = np.multiply(dh1inx_dWwx, first_two)
     new_weights = weights - lr*dw
     return new_weights
-    
+
 
 if __name__ == "__main__":
     print(get_pixels("data/testSample/img_347.jpg"))
-
