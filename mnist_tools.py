@@ -17,7 +17,7 @@ def get_pixels(file_name):
 def relu(x):
     output = np.zeros(len(x))
     for i in range(len(x)):
-        if x <0 :
+        if x[i] <= 0:
             output[i] = 0
         else:
             output[i] = i
@@ -61,7 +61,7 @@ def softmax(vector):
     after applying the softmax fn.
     :params vector: n dimensional np.array vector
     """
-    output = np.zeors(len(vector))
+    output = np.zeros(len(vector))
     denom = 0
     for i in range(len(vector)):
         denom += np.exp(vector[i])
@@ -75,8 +75,9 @@ def dsoftmax(vector):
     value of differential of softmax at those vectors
     """
     output = np.zeros(len(vector))
+    denom = 0
     for i in range(len(vector)):
-        denom += np.exp()
+        denom += np.exp(vector[i])
     for i in range(len(vector)):
         num = (vector[i] * (np.sum(vector) - vector[i]))/denom
         output[i] = num
@@ -125,7 +126,7 @@ def hidden_to_final(weights, output_vals_h2, output_vals_f, target_vals, lr=0.01
     :returns: updated weights which should be used to optimise network
     """
 
-    dEz_dOz = dloss(target,output_vals_f)
+    dEz_dOz = dloss(target_vals, output_vals_f)
     dOoutz_dOinz = dsoftmax(output_vals_h2)
     dOinz_dWyz = np.zeros((len(output_vals_h2), len(output_vals_f)))
     for i in range(len(output_vals_h2)):
@@ -139,7 +140,7 @@ def hidden_to_final(weights, output_vals_h2, output_vals_f, target_vals, lr=0.01
     return new_weights
 
 def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1,
-                         output_vals_h2, input_vals_O, output_vals_0, lr=0.01):
+                         output_vals_h2, input_vals_O, output_vals_O, lr=0.01):
     dh2Oy_dh2iny = dsoftmax(input_vals_h1)
     dh2iny_dWxy = np.zeros((len(output_vals_h1), len(output_vals_h2)))
     for i in range(len(output_vals_h1)):
