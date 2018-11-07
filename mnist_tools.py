@@ -158,7 +158,6 @@ def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1, h2_in
         for j in range(len(output_vals_h2)):
             dh2iny_dWxy[j] = output_vals_h1[i]
     #dEtotal_h2outy vector of len y
-    print("output vals O", output_vals_O)
     dE1_dOouty = dsigmoid(output_vals_O)
     dOout1_dOin1 = dsoftmax(input_vals_O)
     mult_with_w = np.multiply(dE1_dOouty, dOout1_dOin1)
@@ -179,21 +178,32 @@ def input_to_hidden_1(weights, weightxy, output_vals_I, input_vals_h2, input_val
     dh1outx_dh1inx = np.reshape(dh1outx_dh1inx, (1, -1))
     dh1inx_dWwx = np.reshape(output_vals_I, (-1, 1))
     print("dh1inx_dWwx", dh1inx_dWwx.shape)
-    ###### shuoldnt be 3 shuold be len of h1in below ##### use np.tile
-    output_vals_I_2d = np.concatenate((dh1inx_dWwx, dh1inx_dWwx, dh1inx_dWwx), axis=1)
+    output_vals_I_2d = np.tile(dh1inx_dWwx, (1, len(input_vals_h1)))
     print("output vals 2d", output_vals_I_2d.shape)
     dh1inx_dWwx = np.rollaxis(output_vals_I_2d, 1)
+    # third term
     Wxx = np.zeros(len(weightxy))
     # not entirely sure if this following bit is correct
-    for i in range(len(weightxy)):
+    for i in range(len(weightxy)-20):
         Wxx[i] = weightxy[i][i]
     Wxx = np.reshape(Wxx, (-1,1))
+    print("wxx", Wxx.shape)
     dh2outy_dh2iny = dsigmoid(input_vals_h2)
     dh2outy_dh2iny = np.reshape(dh2outy_dh2iny, (-1, 1))
+    print("dh2outy_dh2iny", dh2outy_dh2iny.shape)
+    dEtotal_h2outy = np.reshape(dEtotal_h2outy, (-1, 1))
+    print("dE", dEtotal_h2outy.shape)
+    # first term
     dEtotal_dh1outx = np.multiply(dEtotal_h2outy, dh2outy_dh2iny, Wxx)
+    dh1outx_dh1inx = np.reshape(dh1outx_dh1inx, (-1,1))
+    print("dEtotal_dh1outx", dEtotal_dh1outx.shape)
+    print("sss", dEtotal_dh1outx.shape, dh1outx_dh1inx.shape)
     first_two = np.multiply(dEtotal_dh1outx, dh1outx_dh1inx)
-    first_two = np.reshape(first_two, (-1,1))
-    dw = np.multiply(dh1inx_dWwx, first_two)
+    print("first two", first_two.shape)
+    dw = np.multiply(first_two, dh1inx_dWwx)
+    dw = np.rollaxis(dw, 1)
+    print("dw", dw.shape)
+    print("weights shape", weights.shape)
     new_weights = weights - lr*dw
     return new_weights
 
