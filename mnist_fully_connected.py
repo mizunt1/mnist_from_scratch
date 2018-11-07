@@ -43,9 +43,12 @@ output_bias = mt.bias(output_len)
 
 def run_model(input_vector, target, input_to_h1_weight, h1_to_h2_weight,
               h2_to_out_weight):
-
-    input_layer = mt.relu(input_vector)
-    h1_in = np.matmul(input_layer, input_to_h1_weight)
+    input_norm = input_vector / np.sum(input_vector)
+    print("input norm", input_norm)
+    input_out = mt.relu(input_norm)
+    print("input out layer", input_out)
+    h1_in = np.matmul(input_out, input_to_h1_weight)
+    print("h1 in", h1_in)
     print("h1_in shape", h1_in.shape)
     h1_out = mt.sigmoid(h1_in)
     print("h1 out shape", h1_out.shape)
@@ -53,11 +56,9 @@ def run_model(input_vector, target, input_to_h1_weight, h1_to_h2_weight,
     print("h1 to h2 shape", h1_to_h2_weight.shape)
     print("h2_inshape", h2_in.shape)
     h2_out = mt.softmax(h2_in)
-    print("h2 out shape", h2_out.shape)
-    print("h2 to out", h2_to_out_weight.shape)
     out_layer_in = np.matmul(h2_out, h2_to_out_weight)
     out_layer_out = mt.loss(target, out_layer_in)
-    return input_layer, h1_in, h1_out, h2_in, h2_out, out_layer_in, out_layer_out
+    return input_norm, h1_in, h1_out, h2_in, h2_out, out_layer_in, out_layer_out
 
 
 def run_back_prop(iterations, input_data, target, starting_weights):
@@ -84,7 +85,7 @@ def run_back_prop(iterations, input_data, target, starting_weights):
         new_h2_to_out_weights = mt.hidden_to_final(
             h2_to_out_weight, h2_out, out_layer_out, out_layer_in, target)
         new_h1_to_h2_weights, dEtotal_h2outy = mt.hidden_1_to_hidden_2(
-            h1_to_h2_weight, h2_to_out_weight, h1_in, h1_out, h2_out, out_layer_in, out_layer_out)
+            h1_to_h2_weight, h2_to_out_weight, h1_in, h1_out, h2_in, h2_out, out_layer_in, out_layer_out)
         new_input_to_h1_weight = mt.input_to_hidden_1(
             input_to_h1_weight, h1_to_h2_weight, input_layer, h2_in, h1_in, dEtotal_h2outy)
         print("loss is")

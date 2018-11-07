@@ -20,11 +20,11 @@ def relu(x):
         if x[i] <= 0:
             output[i] = 0
         else:
-            output[i] = i
+            output[i] = x[i]
     return output
 
 
-def weight_2d(y, x, low=-1, high=1):
+def weight_2d(y, x, low=0, high=1):
     """
     Create a 2d matrix with columns x and rows y filled with random
     numbers from -1 to 1
@@ -48,10 +48,15 @@ def sigmoid(x):
     return output
 
 
+def sigmoid_single(x):
+    out = (1+np.exp(-x))**-1
+    return out
+
+
 def dsigmoid(x):
     output = np.zeros(len(x))
     for i in range(len(x)):
-        output[i] = sigmoid(x[i])*(1-sigmoid(x[i]))
+        output[i] = sigmoid_single(x[i])*(1-sigmoid_single(x[i]))
     return output
 
 
@@ -67,7 +72,8 @@ def softmax(vector):
         denom += np.exp(vector[i])
     for i in range(len(vector)):
         output[i] = np.exp(vector[i])
-    return output
+
+    return output / denom
 
 
 def dsoftmax(vector):
@@ -144,9 +150,9 @@ def hidden_to_final(weights, output_vals_h2, output_vals_f, out_layer_in, target
     return new_weights
 
 
-def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1,
+def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1, h2_in,
                          output_vals_h2, input_vals_O, output_vals_O, lr=0.01):
-    dh2Oy_dh2iny = dsoftmax(input_vals_h1)
+    dh2Oy_dh2iny = dsoftmax(h2_in)
     dh2iny_dWxy = np.zeros((len(output_vals_h1), len(output_vals_h2)))
     for i in range(len(output_vals_h1)):
         for j in range(len(output_vals_h2)):
@@ -156,10 +162,10 @@ def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1,
     dE1_dOouty = dsigmoid(output_vals_O)
     dOout1_dOin1 = dsoftmax(input_vals_O)
     mult_with_w = np.multiply(dE1_dOouty, dOout1_dOin1)
-    mult_with_w_reshaped = np.reshape(mult_with_w, (-1,1))
+    mult_with_w_reshaped = np.reshape(mult_with_w, (1,-1))
     to_be_1d = np.multiply(weightyz, mult_with_w_reshaped)
     dEtotal_h2outy = np.sum(to_be_1d, axis=1)
-    dEtotal_h2outy = np.reshape(dEtotal_h2outy, (-1,1))
+    dEtotal_h2outy = np.reshape(dEtotal_h2outy, (1, -1))
     first_two_terms = np.multiply(dh2Oy_dh2iny, dEtotal_h2outy)
     dw = np.multiply(dh2iny_dWxy, first_two_terms)
     new_weights = weights - lr*dw
@@ -169,10 +175,13 @@ def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1,
 def input_to_hidden_1(weights, weightxy, output_vals_I, input_vals_h2, input_vals_h1,
                       dEtotal_h2outy, lr=0.01):
     # relu activation
-    dh1outx_dh1inx= np.ones(len(input_vals_h1))
-    dh1outx_dh1inx = np.reshape(dh1outx_dh1inx, (-1,1))
-    dh1inx_dWwx = output_vals_I
-    output_vals_I_2d = np.concatenate((output_vals_I, output_vals_I, output_vals_I))
+    dh1outx_dh1inx = np.ones(len(input_vals_h1))
+    dh1outx_dh1inx = np.reshape(dh1outx_dh1inx, (1, -1))
+    dh1inx_dWwx = np.reshape(output_vals_I, (-1, 1))
+    print("dh1inx_dWwx", dh1inx_dWwx.shape)
+    ###### shuoldnt be 3 shuold be len of h1in below ##### use np.tile
+    output_vals_I_2d = np.concatenate((dh1inx_dWwx, dh1inx_dWwx, dh1inx_dWwx), axis=1)
+    print("output vals 2d", output_vals_I_2d.shape)
     dh1inx_dWwx = np.rollaxis(output_vals_I_2d, 1)
     Wxx = np.zeros(len(weightxy))
     # not entirely sure if this following bit is correct
