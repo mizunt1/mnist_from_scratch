@@ -3,6 +3,13 @@ from PIL import Image
 import numpy as np
 lr = 0.1
 
+def loss2(target, pred):
+    init = np.zeros(target.shape)
+    i = np.argmax(target)
+    pred_idx = pred[i]
+    val = target*np.log(pred_idx)
+    init[i] = val
+    return init
 
 def return_one_hot(integer):
     blank = np.zeros(10)
@@ -122,95 +129,41 @@ def dloss(target, input):
         loss[i] = -1*(target[i]*(1/input[i]) + (1-target[i])*(1/(1-input[i])))
     return loss
 
-def hidden_to_final(weights, output_vals_h2, output_vals_f, out_layer_in, target_vals, lr=lr):
+def dloss2(target, pred):
+    init = np.zeros(target.shape)
+    idx = np.argmax(target)
+    val=1/pred[idx]
+    init[idx] = val
+    return init
+    
+def hidden_to_output(target, out_out, out_in, loss, h1_out):
+    # dloss_dout_out
+    loss_init = np.zeros(len(loss))
+    idx = np.argmax(target)
+    loss_init[idx] = 1/out_out[i]
+    dloss_dout_out = loss_init
+    # dout_out_d_out_in
+    dout_out_d_out_in = dsoftmax(out_in)
+    # d_out_in_dW
+    h1_out = np.reshape(h1_out,(-1,1))
+    d_out_in_dw = np.tile(h1_out, len(out_out))
+    #multiply all three
+    dw = dloss_dout_out*dout_out_d_out_in*d_out_in_dw
+    return dw, for_bias2
 
-    """
-    Outputs the optimised weight values for the hidden to final layer of the
-    network. The weights should then be replaced by the output of this fn
-    Assumed softmax is used in final layer. TODO: Change this to supply options
-    for different activation fns
-    :params weights: 2D weights matrix of the current weights which are under
-     optimisation should be of dimensions (prev number of nodes, current number of nodes)
-    :params biases: 1D vector of biases (current number of nodes)
-    :params output_vals_h: 1D vector, output of the hidden layer. (prev number of
-     nodes)
-    :params output_vals_f: 1D vector, output of final layer.
-    :params target_vals: vector of target values 1D.
-    :params lr: learning rate
-    :returns: updated weights which should be used to optimise network
-    """
+def db2(for_bias2):
+    return for_bias2
 
-    dEz_dOz = dloss(target_vals, output_vals_f)
-    dOoutz_dOinz = dsoftmax(out_layer_in)
-    dOinz_dWyz = np.zeros((len(output_vals_h2), len(output_vals_f)))
-    for i in range(len(output_vals_h2)):
-        for j in range(len(output_vals_f)):
-            dOinz_dWyz[j] = output_vals_h2[i]
-    # element wise multiplication of first two terms calculated
-    # print("shape dEz_dOz", dEz_dOz.shape)
-    # print("shape dOoutz_dOinz", dOoutz_dOinz.shape)
-    first_two = np.multiply(dEz_dOz, dOoutz_dOinz)
-    first_two_reshaped = np.reshape(first_two, (1,-1))
-    # print("first_two_reshaped.shape", first_two_reshaped.shape)
-    dw = np.multiply(first_two_reshaped, dOinz_dWyz)
-    # print("dw shape", dw.shape)
-    new_weights = weights - lr*dw
-    return dw
+def input_to_hidden(dw1, h1_in, input_vals):
+    # dh1_out_dh1_in
+    dh1_out_dh1_in = dsigmoid(h1_in)
+    # dh1_in_dw1
+    input_vals = np.reshape((input_vals, (-1,1)))
+    dh1_in_dw1 = np.tile(input_vals, len(h1_in))
+    dw = dw1*dh1_in_dw1*dh1_out_dh1_in
+    for_bias = dh1_out_dh1_in
+    return dw, for_bias
 
+def db1(dw2, dw1):
+    return dw1*dw2
 
-def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1, h2_in,
-                         output_vals_h2, input_vals_O, output_vals_O, lr=lr):
-    dh2Oy_dh2iny = dsoftmax(h2_in)
-    dh2iny_dWxy = np.zeros((len(output_vals_h1), len(output_vals_h2)))
-    for i in range(len(output_vals_h1)):
-        for j in range(len(output_vals_h2)):
-            dh2iny_dWxy[j] = output_vals_h1[i]
-    #dEtotal_h2outy vector of len y
-    dE1_dOouty = dsigmoid(output_vals_O)
-    dOout1_dOin1 = dsoftmax(input_vals_O)
-    mult_with_w = np.multiply(dE1_dOouty, dOout1_dOin1)
-    mult_with_w_reshaped = np.reshape(mult_with_w, (1,-1))
-    to_be_1d = np.multiply(weightyz, mult_with_w_reshaped)
-    dEtotal_h2outy = np.sum(to_be_1d, axis=1)
-    dEtotal_h2outy = np.reshape(dEtotal_h2outy, (1, -1))
-    first_two_terms = np.multiply(dh2Oy_dh2iny, dEtotal_h2outy)
-    dw = np.multiply(dh2iny_dWxy, first_two_terms)
-    new_weights = weights - lr*dw
-    return dw, dEtotal_h2outy
-    # element wise multiplication of first two terms calculate
-
-def input_to_hidden_1(weights, weightxy, output_vals_I, input_vals_h2, input_vals_h1,
-                      dEtotal_h2outy, lr=lr):
-    # relu activation
-    dh1outx_dh1inx = np.ones(len(input_vals_h1))
-    dh1outx_dh1inx = np.reshape(dh1outx_dh1inx, (1, -1))
-    dh1inx_dWwx = np.reshape(output_vals_I, (-1, 1))
-    # print("dh1inx_dWwx", dh1inx_dWwx.shape)
-    output_vals_I_2d = np.tile(dh1inx_dWwx, (1, len(input_vals_h1)))
-    # print("output vals 2d", output_vals_I_2d.shape)
-    dh1inx_dWwx = np.rollaxis(output_vals_I_2d, 1)
-    # third term
-    Wxx = np.zeros(len(weightxy))
-    # not entirely sure if this following bit is correct
-    for i in range(len(weightxy)-20):
-        Wxx[i] = weightxy[i][i]
-    Wxx = np.reshape(Wxx, (-1,1))
-    # # print("wxx", Wxx.shape)
-    dh2outy_dh2iny = dsigmoid(input_vals_h2)
-    dh2outy_dh2iny = np.reshape(dh2outy_dh2iny, (-1, 1))
-    # # print("dh2outy_dh2iny", dh2outy_dh2iny.shape)
-    dEtotal_h2outy = np.reshape(dEtotal_h2outy, (-1, 1))
-    # # print("dE", dEtotal_h2outy.shape)
-    # first term
-    dEtotal_dh1outx = np.multiply(dEtotal_h2outy, dh2outy_dh2iny, Wxx)
-    dh1outx_dh1inx = np.reshape(dh1outx_dh1inx, (-1,1))
-    # # print("dEtotal_dh1outx", dEtotal_dh1outx.shape)
-    # # print("sss", dEtotal_dh1outx.shape, dh1outx_dh1inx.shape)
-    first_two = np.multiply(dEtotal_dh1outx, dh1outx_dh1inx)
-    # # print("first two", first_two.shape)
-    dw = np.multiply(first_two, dh1inx_dWwx)
-    dw = np.rollaxis(dw, 1)
-    # # print("dw", dw.shape)
-    # # print("weights shape", weights.shape)
-    new_weights = weights - lr*dw
-    return dw
