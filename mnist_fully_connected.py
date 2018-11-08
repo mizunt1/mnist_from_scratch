@@ -13,7 +13,6 @@ import mnist_tools as mt
 # hyper params
 input_len = 784
 layer1_len = 100
-layer2_len = 100
 output_len = 10
 
 import glob
@@ -31,40 +30,14 @@ for i in range(10):
     data_dict[i] = image_list
 print("loaded data")
 
-# print("number of images loaded:", len(image_list))
-#pixel_file = "data/trainingSet/0/img_542.jpg"
-pixel_file = image_list[0]
-## print(pixel_file)
-# pixel intensities of 32*32 as a single vector len is 784
-#pixels = mt.get_pixels(pixel_file).flatten()
-
-# example hypothetical target
-one_hot = np.array([0 for i in range(10)])
-one_hot[0] = 1
-
-input_to_h1_weight = mt.weight_2d(input_len, layer1_len)
-# (784, 100)
-h1_to_h2_weight = mt.weight_2d(layer1_len, layer2_len)
-# (100, 80)
-h2_to_out_weight = mt.weight_2d(layer2_len, output_len)
-# (80,10)
-starting_weights = {"input_to_h1_weight": input_to_h1_weight,
-                    "h1_to_h2_weight": h1_to_h2_weight,
-                    "h2_to_out_weight": h2_to_out_weight}
-
-# biases
+h1_to_out_weight = mt.weight_2d(layer1_len, output_len)
 
 layer1_bias = mt.bias(layer1_len)
-layer2_bias = mt.bias(layer2_len)
-output_bias = mt.bias(output_len)
-
-# model
 
 
 def run_model(input_vector, target, input_to_h1_weight, h1_to_h2_weight,
               h2_to_out_weight):
     input_out = input_vector / np.sum(input_vector)
-    # print("input_out", input_out)
     h1_in = np.matmul(input_out, input_to_h1_weight)
     h1_out = mt.relu(h1_in)
     # print("h1_out", h1_out)
@@ -84,7 +57,6 @@ def run_model(input_vector, target, input_to_h1_weight, h1_to_h2_weight,
     return input_out, h1_in, h1_out, h2_in, h2_out, out_layer_in, loss_layer_out, out_layer_out_norm
 
 
-
 def run_back_prop(iterations, data_dict, starting_weights):
     """
     rememebr that this is still for 1D
@@ -98,7 +70,7 @@ def run_back_prop(iterations, data_dict, starting_weights):
     sum_h2_out_weight = np.zeros(h2_to_out_weight.shape)
     sum_h1_h2_weight = np.zeros(h1_to_h2_weight.shape)
     sum_input_h1_weight = np.zeros(input_to_h1_weight.shape)
-
+    correct = 0
     for i in range(iterations):
         randint = np.random.randint(0, high=9)
         input_data = data_dict[randint][i//num_data_in_each]
@@ -129,7 +101,9 @@ def run_back_prop(iterations, data_dict, starting_weights):
             print(
                 "wrongness (max 1, min 0): ", np.sum(np.absolute(out_layer_out - target))/10)
             # print("out layer in", out_layer_in)
-            lr =0.1
+            if np.argmax(out_layer_out) == np.argmax(target):
+                correct += 1
+            lr = 0.1
             input_to_h1_weight = np.subtract(
                 input_to_h1_weight, np.multiply(np.divide(sum_input_h1_weight, batch_size), lr))
             h1_to_h2_weight = np.subtract(
@@ -139,5 +113,7 @@ def run_back_prop(iterations, data_dict, starting_weights):
             sum_h2_out_weight = np.zeros(h2_to_out_weight.shape)
             sum_h1_h2_weight = np.zeros(h1_to_h2_weight.shape)
             sum_input_h1_weight = np.zeros(input_to_h1_weight.shape)
+            print(correct)
+    print("correct: max 1, min 0:", correct/(iterations/batch_size))
 
 run_back_prop(1000, data_dict, starting_weights)
