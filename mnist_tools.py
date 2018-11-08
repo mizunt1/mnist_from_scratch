@@ -1,7 +1,7 @@
 from PIL import Image
 # could probs do pixel analysis with numpy
 import numpy as np
-
+lr = 0.1
 
 def get_pixels(file_name):
     """
@@ -24,7 +24,7 @@ def relu(x):
     return output
 
 
-def weight_2d(y, x, low=0, high=1):
+def weight_2d(y, x, low=-1, high=1):
     """
     Create a 2d matrix with columns x and rows y filled with random
     numbers from -1 to 1
@@ -115,7 +115,8 @@ def dloss(target, input):
         loss[i] = -1*(target[i]*(1/input[i]) + (1-target[i])*(1/(1-input[i])))
     return loss
 
-def hidden_to_final(weights, output_vals_h2, output_vals_f, out_layer_in, target_vals, lr=0.01):
+def hidden_to_final(weights, output_vals_h2, output_vals_f, out_layer_in, target_vals, lr=lr):
+    
     """
     Outputs the optimised weight values for the hidden to final layer of the
     network. The weights should then be replaced by the output of this fn
@@ -139,19 +140,19 @@ def hidden_to_final(weights, output_vals_h2, output_vals_f, out_layer_in, target
         for j in range(len(output_vals_f)):
             dOinz_dWyz[j] = output_vals_h2[i]
     # element wise multiplication of first two terms calculated
-    print("shape dEz_dOz", dEz_dOz.shape)
-    print("shape dOoutz_dOinz", dOoutz_dOinz.shape)
+    # print("shape dEz_dOz", dEz_dOz.shape)
+    # print("shape dOoutz_dOinz", dOoutz_dOinz.shape)
     first_two = np.multiply(dEz_dOz, dOoutz_dOinz)
     first_two_reshaped = np.reshape(first_two, (1,-1))
-    print("first_two_reshaped.shape", first_two_reshaped.shape)
+    # print("first_two_reshaped.shape", first_two_reshaped.shape)
     dw = np.multiply(first_two_reshaped, dOinz_dWyz)
-    print("dw shape", dw.shape)
+    # print("dw shape", dw.shape)
     new_weights = weights - lr*dw
     return new_weights
 
 
 def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1, h2_in,
-                         output_vals_h2, input_vals_O, output_vals_O, lr=0.01):
+                         output_vals_h2, input_vals_O, output_vals_O, lr=lr):
     dh2Oy_dh2iny = dsoftmax(h2_in)
     dh2iny_dWxy = np.zeros((len(output_vals_h1), len(output_vals_h2)))
     for i in range(len(output_vals_h1)):
@@ -172,14 +173,14 @@ def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1, h2_in
     # element wise multiplication of first two terms calculate
 
 def input_to_hidden_1(weights, weightxy, output_vals_I, input_vals_h2, input_vals_h1,
-                      dEtotal_h2outy, lr=0.01):
+                      dEtotal_h2outy, lr=lr):
     # relu activation
     dh1outx_dh1inx = np.ones(len(input_vals_h1))
     dh1outx_dh1inx = np.reshape(dh1outx_dh1inx, (1, -1))
     dh1inx_dWwx = np.reshape(output_vals_I, (-1, 1))
-    print("dh1inx_dWwx", dh1inx_dWwx.shape)
+    # print("dh1inx_dWwx", dh1inx_dWwx.shape)
     output_vals_I_2d = np.tile(dh1inx_dWwx, (1, len(input_vals_h1)))
-    print("output vals 2d", output_vals_I_2d.shape)
+    # print("output vals 2d", output_vals_I_2d.shape)
     dh1inx_dWwx = np.rollaxis(output_vals_I_2d, 1)
     # third term
     Wxx = np.zeros(len(weightxy))
@@ -187,26 +188,22 @@ def input_to_hidden_1(weights, weightxy, output_vals_I, input_vals_h2, input_val
     for i in range(len(weightxy)-20):
         Wxx[i] = weightxy[i][i]
     Wxx = np.reshape(Wxx, (-1,1))
-    print("wxx", Wxx.shape)
+    # # print("wxx", Wxx.shape)
     dh2outy_dh2iny = dsigmoid(input_vals_h2)
     dh2outy_dh2iny = np.reshape(dh2outy_dh2iny, (-1, 1))
-    print("dh2outy_dh2iny", dh2outy_dh2iny.shape)
+    # # print("dh2outy_dh2iny", dh2outy_dh2iny.shape)
     dEtotal_h2outy = np.reshape(dEtotal_h2outy, (-1, 1))
-    print("dE", dEtotal_h2outy.shape)
+    # # print("dE", dEtotal_h2outy.shape)
     # first term
     dEtotal_dh1outx = np.multiply(dEtotal_h2outy, dh2outy_dh2iny, Wxx)
     dh1outx_dh1inx = np.reshape(dh1outx_dh1inx, (-1,1))
-    print("dEtotal_dh1outx", dEtotal_dh1outx.shape)
-    print("sss", dEtotal_dh1outx.shape, dh1outx_dh1inx.shape)
+    # # print("dEtotal_dh1outx", dEtotal_dh1outx.shape)
+    # # print("sss", dEtotal_dh1outx.shape, dh1outx_dh1inx.shape)
     first_two = np.multiply(dEtotal_dh1outx, dh1outx_dh1inx)
-    print("first two", first_two.shape)
+    # # print("first two", first_two.shape)
     dw = np.multiply(first_two, dh1inx_dWwx)
     dw = np.rollaxis(dw, 1)
-    print("dw", dw.shape)
-    print("weights shape", weights.shape)
+    # # print("dw", dw.shape)
+    # # print("weights shape", weights.shape)
     new_weights = weights - lr*dw
     return new_weights
-
-
-if __name__ == "__main__":
-    print(get_pixels("data/testSample/img_347.jpg"))
