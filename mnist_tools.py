@@ -7,7 +7,7 @@ def loss2(target, pred):
     init = np.zeros(target.shape)
     i = np.argmax(target)
     pred_idx = pred[i]
-    val = target*np.log(pred_idx)
+    val = np.log(pred_idx)
     init[i] = val
     return init
 
@@ -140,7 +140,7 @@ def hidden_to_output(target, out_out, out_in, loss, h1_out):
     # dloss_dout_out
     loss_init = np.zeros(len(loss))
     idx = np.argmax(target)
-    loss_init[idx] = 1/out_out[i]
+    loss_init[idx] = 1/out_out[idx]
     dloss_dout_out = loss_init
     # dout_out_d_out_in
     dout_out_d_out_in = dsoftmax(out_in)
@@ -149,17 +149,23 @@ def hidden_to_output(target, out_out, out_in, loss, h1_out):
     d_out_in_dw = np.tile(h1_out, len(out_out))
     #multiply all three
     dw = dloss_dout_out*dout_out_d_out_in*d_out_in_dw
+    for_bias2 =  dloss_dout_out*dout_out_d_out_in
     return dw, for_bias2
 
 def db2(for_bias2):
     return for_bias2
 
 def input_to_hidden(dw1, h1_in, input_vals):
+    dw1 = np.rollaxis(dw1, axis=1)
     # dh1_out_dh1_in
+    print(dw1.shape)
     dh1_out_dh1_in = dsigmoid(h1_in)
+    print("dh1_out_dh1_in",dh1_out_dh1_in.shape)
     # dh1_in_dw1
-    input_vals = np.reshape((input_vals, (-1,1)))
+    dh1_out_dh1_in = np.reshape(dh1_out_dh1_in,(1,-1))
+    input_vals = np.reshape(input_vals, (-1,1))
     dh1_in_dw1 = np.tile(input_vals, len(h1_in))
+    print("dh1_in_dw1", dh1_in_dw1.shape)
     dw = dw1*dh1_in_dw1*dh1_out_dh1_in
     for_bias = dh1_out_dh1_in
     return dw, for_bias
