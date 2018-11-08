@@ -6,8 +6,10 @@
 # next time, go through Nielsen material above and implement back prop and add in biases
 
 import numpy as np
-import mnist_tools as mt
+import os
 from PIL import Image
+
+import mnist_tools as mt
 # hyper params
 input_len = 784
 layer1_len = 100
@@ -15,14 +17,20 @@ layer2_len = 100
 output_len = 10
 
 import glob
-image_list = []
-for filename in glob.glob('data/trainingSet/0/*.jpg'): #assuming gif
-    im=Image.open(filename)
-    pixels = np.asarray(im.getdata())
-    width, height = im.size
-    pixels = np.reshape(pixels, (width, height))
-    pixels = pixels.flatten()
-    image_list.append(pixels)
+data_dict = {}
+for i in range(10):
+    image_list = []
+    file_path = os.path.join('data', 'trainingSet', str(i), '*.jpg')
+    for filename in glob.glob(file_path):
+        im = Image.open(filename)
+        pixels = np.asarray(im.getdata())
+        width, height = im.size
+        pixels = np.reshape(pixels, (width, height))
+        pixels = pixels.flatten()
+        image_list.append(pixels)
+    data_dict[i] = image_list
+print("loaded data")
+
 # print("number of images loaded:", len(image_list))
 #pixel_file = "data/trainingSet/0/img_542.jpg"
 pixel_file = image_list[0]
@@ -76,16 +84,25 @@ def run_model(input_vector, target, input_to_h1_weight, h1_to_h2_weight,
     return input_out, h1_in, h1_out, h2_in, h2_out, out_layer_in, loss_layer_out, out_layer_out_norm
 
 
-def run_back_prop(iterations, pixel_list, target, starting_weights):
+
+def run_back_prop(iterations, data_dict, starting_weights):
     """
     rememebr that this is still for 1D
     """
+    batch_size = 10
+    num_data_in_each = 60
     # starting weights dictionary thing:
     input_to_h1_weight = starting_weights['input_to_h1_weight']
     h1_to_h2_weight = starting_weights['h1_to_h2_weight']
     h2_to_out_weight = starting_weights['h2_to_out_weight']
+    sum_h2_out_weight = np.zeros(h2_to_out_weight.shape)
+    sum_h1_h2_weight = np.zeros(h1_to_h2_weight.shape)
+    sum_input_h1_weight = np.zeros(input_to_h1_weight.shape)
+
     for i in range(iterations):
-        input_data = pixel_list[i//60]
+        randint = np.random.randint(0, high=9)
+        input_data = data_dict[randint][i//num_data_in_each]
+        target = mt.return_one_hot(randint)
         input_layer, h1_in, h1_out, h2_in, h2_out, out_layer_in, loss_layer_out, out_layer_out = run_model(
             input_data,
             target,
@@ -93,22 +110,34 @@ def run_back_prop(iterations, pixel_list, target, starting_weights):
             h1_to_h2_weight,
             h2_to_out_weight)
 
-        new_h2_to_out_weight = mt.hidden_to_final(
+        d_h2_to_out_weight = mt.hidden_to_final(
             h2_to_out_weight, h2_out, out_layer_out, out_layer_in, target)
-        new_h1_to_h2_weight, dEtotal_h2outy = mt.hidden_1_to_hidden_2(
+        d_h1_to_h2_weight, dEtotal_h2outy = mt.hidden_1_to_hidden_2(
             h1_to_h2_weight, h2_to_out_weight, h1_in, h1_out, h2_in, h2_out, out_layer_in, out_layer_out)
-        new_input_to_h1_weight = mt.input_to_hidden_1(
+        d_input_to_h1_weight = mt.input_to_hidden_1(
             input_to_h1_weight, h1_to_h2_weight, input_layer, h2_in, h1_in, dEtotal_h2outy)
-        print("loss is")
-        print(np.average(loss_layer_out))
-        print("out layer", out_layer_out)
-        print(target)
-        print(
-            "wrongness (max 1, min 0): ", np.sum(np.absolute(out_layer_out - target))/10)
-        # print("out layer in", out_layer_in)
-        input_to_h1_weight = new_input_to_h1_weight
-        h1_to_h2_weight = new_h1_to_h2_weight
-        h2_to_out_weight = new_h2_to_out_weight
 
-run_back_prop(5, image_list, one_hot, starting_weights)
+        sum_h2_out_weight = np.add(d_h2_to_out_weight, sum_h2_out_weight)
+        sum_h1_h2_weight = np.add(d_h1_to_h2_weight, sum_h1_h2_weight)
+        sum_input_h1_weight = np.add(d_input_to_h1_weight, sum_input_h1_weight)
 
+        if i % batch_size == 0:
+            print("loss is")
+            print(np.average(loss_layer_out))
+            print("out layer", out_layer_out)
+            print(target)
+            print(
+                "wrongness (max 1, min 0): ", np.sum(np.absolute(out_layer_out - target))/10)
+            # print("out layer in", out_layer_in)
+            lr =0.1
+            input_to_h1_weight = np.subtract(
+                input_to_h1_weight, np.multiply(np.divide(sum_input_h1_weight, batch_size), lr))
+            h1_to_h2_weight = np.subtract(
+                h1_to_h2_weight, np.multiply(np.divide(sum_h1_h2_weight, batch_size), lr))
+            h2_to_out_weight = np.subtract(
+                h2_to_out_weight, np.multiply(np.divide(sum_h2_out_weight, batch_size), lr))
+            sum_h2_out_weight = np.zeros(h2_to_out_weight.shape)
+            sum_h1_h2_weight = np.zeros(h1_to_h2_weight.shape)
+            sum_input_h1_weight = np.zeros(input_to_h1_weight.shape)
+
+run_back_prop(1000, data_dict, starting_weights)

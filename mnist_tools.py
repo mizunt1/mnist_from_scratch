@@ -3,6 +3,13 @@ from PIL import Image
 import numpy as np
 lr = 0.1
 
+
+def return_one_hot(integer):
+    blank = np.zeros(10)
+    blank[integer] = 1
+    return blank
+
+
 def get_pixels(file_name):
     """
     takes a file path to an image and returns an array of pixels
@@ -116,7 +123,7 @@ def dloss(target, input):
     return loss
 
 def hidden_to_final(weights, output_vals_h2, output_vals_f, out_layer_in, target_vals, lr=lr):
-    
+
     """
     Outputs the optimised weight values for the hidden to final layer of the
     network. The weights should then be replaced by the output of this fn
@@ -148,7 +155,7 @@ def hidden_to_final(weights, output_vals_h2, output_vals_f, out_layer_in, target
     dw = np.multiply(first_two_reshaped, dOinz_dWyz)
     # print("dw shape", dw.shape)
     new_weights = weights - lr*dw
-    return new_weights
+    return dw
 
 
 def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1, h2_in,
@@ -169,7 +176,7 @@ def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1, h2_in
     first_two_terms = np.multiply(dh2Oy_dh2iny, dEtotal_h2outy)
     dw = np.multiply(dh2iny_dWxy, first_two_terms)
     new_weights = weights - lr*dw
-    return new_weights, dEtotal_h2outy
+    return dw, dEtotal_h2outy
     # element wise multiplication of first two terms calculate
 
 def input_to_hidden_1(weights, weightxy, output_vals_I, input_vals_h2, input_vals_h1,
@@ -206,4 +213,4 @@ def input_to_hidden_1(weights, weightxy, output_vals_I, input_vals_h2, input_val
     # # print("dw", dw.shape)
     # # print("weights shape", weights.shape)
     new_weights = weights - lr*dw
-    return new_weights
+    return dw
