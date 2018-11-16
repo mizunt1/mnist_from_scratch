@@ -129,47 +129,33 @@ def dloss(target, input):
         loss[i] = -1*(target[i]*(1/input[i]) + (1-target[i])*(1/(1-input[i])))
     return loss
 
+
 def dloss2(target, pred):
     init = np.zeros(target.shape)
     idx = np.argmax(target)
-    val=1/pred[idx]
+    val=1 / pred[idx]
     init[idx] = val
     return init
-    
-def hidden_to_output(target, out_out, out_in, loss, h1_out):
-    # dloss_dout_out
-    loss_init = np.zeros(len(loss))
-    idx = np.argmax(target)
-    loss_init[idx] = 1/out_out[idx]
-    dloss_dout_out = loss_init
-    # dout_out_d_out_in
-    dout_out_d_out_in = dsoftmax(out_in)
-    # d_out_in_dW
-    h1_out = np.reshape(h1_out,(-1,1))
-    d_out_in_dw = np.tile(h1_out, len(out_out))
-    #multiply all three
-    dw = dloss_dout_out*dout_out_d_out_in*d_out_in_dw
-    for_bias2 =  dloss_dout_out*dout_out_d_out_in
-    return dw, for_bias2
 
-def db2(for_bias2):
-    return for_bias2
 
-def input_to_hidden(dw1, h1_in, input_vals):
-    dw1 = np.rollaxis(dw1, axis=1)
-    # dh1_out_dh1_in
-    print(dw1.shape)
-    dh1_out_dh1_in = dsigmoid(h1_in)
-    print("dh1_out_dh1_in",dh1_out_dh1_in.shape)
-    # dh1_in_dw1
-    dh1_out_dh1_in = np.reshape(dh1_out_dh1_in,(1,-1))
-    input_vals = np.reshape(input_vals, (-1,1))
-    dh1_in_dw1 = np.tile(input_vals, len(h1_in))
-    print("dh1_in_dw1", dh1_in_dw1.shape)
-    dw = dw1*dh1_in_dw1*dh1_out_dh1_in
-    for_bias = dh1_out_dh1_in
-    return dw, for_bias
+def cost(target, pred):
+    out = (pred-target)**2
+    num_items = len(target)
+    out = sum(out) / (2*num_items)
+    return out
 
-def db1(dw2, dw1):
-    return dw1*dw2
 
+def dw1(w_t2, dz_t2, z_t1, a_t0):
+    """
+    w_t2: weights of layer above the layer on interest
+    dz_t2: dC/dz of layer above tha layer on interest
+    z_t1: dC/dz of layer of interst
+    a_t0: a of layer below the layer of interest
+    """
+    w_t2_trans = np.transpose(w_t2)
+    step_one = np.dot(w_t2_trans, dz_t2)
+    dsigmoid_z = dsigmoid(z_t1)
+    dz_t1 = np.mult(step_one, dsigmoid_z)
+    dw_t1 = np.dot(a_t0, dz_t1)
+    # note dz_t1 is the same as db_t1 bias change for layer of interest
+    return dw_t1, dz_t1

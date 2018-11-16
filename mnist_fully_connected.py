@@ -39,20 +39,32 @@ b2 = mt.bias(output_len)
 
 starting_weights = {"input_to_h1_weight": input_to_h1_weight,
                     "h1_to_output_weight": h1_to_output_weight}
-starting_bias = {"b1": b1,
-                    "b2": b2}
+starting_bias = {"b1": b1, "b2": b2}
+
 
 def run_model(input_vector, target, input_to_h1_weight, h1_to_output_weight, b1, b2):
     # normalise input
+    # input_out =a1
     input_out = mt.sigmoid(input_vector)
-    # might have to do np.add
-    h1_in = np.matmul(input_out, input_to_h1_weight) + b1
-    h1_out = mt.sigmoid(h1_in)
-    out_in = np.matmul(h1_out, h1_to_output_weight) + b2
-    out_out = mt.softmax(out_in)
-    loss = mt.loss2(target, out_out)
-    return input_out, h1_in, h1_out, out_in, out_out, loss
 
+    # (1, 784)
+    # might have to do np.add
+    # weights = (784, 100)
+    # h1_in = z2
+    h1_in = np.matmul(input_out, input_to_h1_weight) + b1
+    # (100, 1)
+    # h1_out = a2
+    h1_out = mt.sigmoid(h1_in)
+    # (100,1)
+    # out_in = z3
+    out_in = np.matmul(h1_out, h1_to_output_weight) + b2
+    # weights = (100, 10)
+    # (100,1)
+    # out_out = a3
+    out_out = mt.sigmoid(out_in)
+    # (10, 1)
+    loss = mt.cost(target, out_out)
+    return input_out, h1_in, h1_out, out_in, out_out, loss
 
 
 def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
@@ -71,7 +83,7 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
     sum_h1_out_weight = np.zeros(h1_to_output_weight.shape)
     sum_b1 = np.zeros(b1.shape)
     sum_b2 = np.zeros(b2.shape)
-    
+
     for i in range(iterations):
         # initialise data to input in to model
         randint = np.random.randint(0, high=9)
@@ -87,7 +99,7 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
             target, out_out, out_in, loss, h1_out)
         d_input_to_h1_weight, for_bias1 = mt.input_to_hidden(
             d_h1_to_out_weight, h1_in, input_data)
-        
+
         d_b1 = mt.db1(for_bias1)
         d_b2 = mt.db2(for_bias2)
 
@@ -96,7 +108,7 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
         sum_h1_output_weight = np.add(d_h1_to_out_weight, sum_h1_output_weight)
         sum_b1 = np.add(d_b1, sum_b1)
         sum_b2 = np.add(d_b2, sum_b2)
-        
+
         if i % batch_size == 0:
             print("loss is")
             print(np.average(loss_layer_out))
@@ -116,11 +128,11 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
 
             b1 = np.subtract(b1, np.multiply(np.divide(sum_b1, batch_size), lr))
             b2 = np.subtract(b2, np.multiply(np.divide(sum_b2, batch_size), lr))
-            
-            
+
+
             sum_input_h1_weight = np.zeros(input_to_h1_weight.shape)
             sum_h1_out_weight = np.zeros(h1_to_out_weight.shape)
             sum_b1 = np.zeros(b1.shape)
             sum_b1 = np.zeros(b2.shape)
-            
+
 run_back_prop(1000, data_dict, starting_weights, starting_bias)
