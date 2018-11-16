@@ -95,10 +95,9 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
             input_to_h1_weight,
             h1_to_output_weight, b1, b2)
         # compute changes to weights and sum them
-        d_h1_to_out_weight, for_bias2= mt.hidden_to_output(
-            target, out_out, out_in, loss, h1_out)
-        d_input_to_h1_weight, for_bias1 = mt.input_to_hidden(
-            d_h1_to_out_weight, h1_in, input_data)
+        # change in weight for weight 2 i.e. going to hidden layer 1
+        dw2, dz2 = dw1()
+        
 
         d_b1 = mt.db1(for_bias1)
         d_b2 = mt.db2(for_bias2)
