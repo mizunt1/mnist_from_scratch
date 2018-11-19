@@ -95,9 +95,9 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
             input_to_h1_weight,
             h1_to_output_weight, b1, b2)
         # compute changes to weights and sum them
-        dw_1, d_b1 = mt.dw1(h1_to_output_weight, out_in, h1_in, input_out)
-        # dw_2 is derivative of loss function
         dw_2, d_b2 = mt.dfinal(target, out_out, out_in, h1_in)
+        dw_1, d_b1 = mt.dw1(h1_to_output_weight, d_b2, h1_in, input_out)
+        # dw_2 is derivative of loss function
         # sum changes
         sum_input_h1_weight = np.add(dw_1, sum_input_h1_weight)
         sum_h1_output_weight = np.add(dw_2, sum_h1_out_weight)

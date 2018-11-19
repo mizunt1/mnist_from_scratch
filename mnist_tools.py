@@ -145,17 +145,18 @@ def cost(target, pred):
     return out
 
 
-def dw1(w_t2, dz_t2, dz_t1, a_t0):
+def dw1(w_t2, dz_t2, z_t1, a_t0):
     """
     w_t2: weights of layer above the layer on interest
     dz_t2: dC/dz of layer above tha layer on interest
     z_t1: dC/dz of layer of interst
     a_t0: a of layer below the layer of interest
     """
+    print(w_t2.shape)
     w_t2_trans = np.transpose(w_t2)
     step_one = np.dot(w_t2_trans, dz_t2)
-    dsigmoid_z = dsigmoid(dz_t1)
-    dz_t1 = np.mult(step_one, dsigmoid_z)
+    dsigmoid_z = dsigmoid(z_t1)
+    dz_t1 = np.multiply(step_one, dsigmoid_z)
     dw_t1 = np.dot(a_t0, dz_t1)
     # note dz_t1 is the same as db_t1 bias change for layer of interest
     return dw_t1, dz_t1
@@ -163,6 +164,6 @@ def dw1(w_t2, dz_t2, dz_t1, a_t0):
 
 def dfinal(target, pred, zL, aL0):
     diff = (pred - target)
-    dz = np.mult(diff, dsigmoid(zL))
-    dw = np.mult(dz, aL0)
+    dz = np.multiply(diff, dsigmoid(zL))
+    dw = np.dot(dz, aL0)
     return dw, dz
