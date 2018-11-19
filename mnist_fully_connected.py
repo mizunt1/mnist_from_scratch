@@ -30,9 +30,9 @@ for i in range(10):
     data_dict[i] = image_list
 print("loaded data")
 
-input_to_h1_weight = mt.weight_2d(input_len, layer1_len)
+input_to_h1_weight = mt.weight_2d(layer1_len, input_len)
 # (784, 100)
-h1_to_output_weight = mt.weight_2d(layer1_len, output_len)
+h1_to_output_weight = mt.weight_2d(output_len, layer1_len)
 # (100, 10)
 b1 = mt.bias(layer1_len)
 b2 = mt.bias(output_len)
@@ -51,13 +51,13 @@ def run_model(input_vector, target, input_to_h1_weight, h1_to_output_weight, b1,
     # might have to do np.add
     # weights = (784, 100)
     # h1_in = z1
-    h1_in = np.matmul(input_out, input_to_h1_weight) + b1
+    h1_in = np.matmul(input_to_h1_weight, input_out) + b1
     # (100, 1)
     # h1_out = a2
     h1_out = mt.sigmoid(h1_in)
     # (100,1)
     # out_in = z2
-    out_in = np.matmul(h1_out, h1_to_output_weight) + b2
+    out_in = np.matmul(h1_to_output_weight, h1_out) + b2
     # weights = (100, 10)
     # (100,1)
     # out_out = a3
@@ -96,7 +96,7 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
             h1_to_output_weight, b1, b2)
         # compute changes to weights and sum them
         dw_2, d_b2 = mt.dfinal(target, out_out, out_in, h1_in)
-        dw_1, d_b1 = mt.dw1(h1_to_output_weight, d_b2, h1_in, input_out)
+        dw_1, d_b1 = mt.dw1(h1_to_output_weight, out_in, h1_in, input_out)
         # dw_2 is derivative of loss function
         # sum changes
         sum_input_h1_weight = np.add(dw_1, sum_input_h1_weight)
