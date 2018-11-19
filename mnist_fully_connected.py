@@ -50,13 +50,13 @@ def run_model(input_vector, target, input_to_h1_weight, h1_to_output_weight, b1,
     # (1, 784)
     # might have to do np.add
     # weights = (784, 100)
-    # h1_in = z2
+    # h1_in = z1
     h1_in = np.matmul(input_out, input_to_h1_weight) + b1
     # (100, 1)
     # h1_out = a2
     h1_out = mt.sigmoid(h1_in)
     # (100,1)
-    # out_in = z3
+    # out_in = z2
     out_in = np.matmul(h1_out, h1_to_output_weight) + b2
     # weights = (100, 10)
     # (100,1)
@@ -95,17 +95,12 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
             input_to_h1_weight,
             h1_to_output_weight, b1, b2)
         # compute changes to weights and sum them
-        d_h1_to_out_weight, for_bias2= mt.hidden_to_output(
-            target, out_out, out_in, loss, h1_out)
-        d_input_to_h1_weight, for_bias1 = mt.input_to_hidden(
-            d_h1_to_out_weight, h1_in, input_data)
-
-        d_b1 = mt.db1(for_bias1)
-        d_b2 = mt.db2(for_bias2)
-
+        dw_1, d_b1 = mt.dw1(h1_to_output_weight, out_in, h1_in, input_out)
+        # dw_2 is derivative of loss function
+        dw_2, d_b2 = mt.dfinal(target, out_out, out_in, h1_in)
         # sum changes
-        sum_input_h1_weight = np.add(d_input_to_h1_weight, sum_input_h1_weight)
-        sum_h1_output_weight = np.add(d_h1_to_out_weight, sum_h1_output_weight)
+        sum_input_h1_weight = np.add(dw_1, sum_input_h1_weight)
+        sum_h1_output_weight = np.add(dw_2, sum_h1_out_weight)
         sum_b1 = np.add(d_b1, sum_b1)
         sum_b2 = np.add(d_b2, sum_b2)
 
