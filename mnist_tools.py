@@ -158,6 +158,7 @@ def dw1(w_t2, dz_t2, z_t1, a_t0):
     dz_t1 = np.multiply(step_one, dsigmoid_z)
     a_t0 = np.reshape(a_t0, (-1, 1))
     dz_t1 = np.reshape(dz_t1, (1, -1))
+
     dw_t1 = np.dot(a_t0, dz_t1)
     # note dz_t1 is the same as db_t1 bias change for layer of interest
     return dw_t1, dz_t1
@@ -166,7 +167,10 @@ def dw1(w_t2, dz_t2, z_t1, a_t0):
 def dfinal(target, pred, zL, aL0):
     diff = (pred - target)
     dz = np.multiply(diff, dsigmoid(zL))
-    dz = np.reshape(dz, (-1, 1))
-    aL0 = np.reshape(aL0, (1, -1))
-    dw = np.dot(dz, aL0)
+    step1 = np.tile(aL0, (len(dz), 1))
+    for i in range(len(dz)):
+        for j in range(len(aL0)):
+            step1[i][j] = aL0[j] * dz[i]
+
+    dw = step1
     return dw, dz
