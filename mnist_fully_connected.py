@@ -55,12 +55,22 @@ def run_model(input_vector, target, input_to_h1_weight, h1_to_output_weight, b1,
     # (100, 1)
     # h1_out = a2
     h1_out = mt.sigmoid(h1_in)
+    h1_out = np.reshape(h1_out, (-1, 1))
     # (100,1)
     # out_in = z2
+    print("print", h1_out.shape)
+    # matmul goes wrong here
+    print("h1 out w", h1_to_output_weight.shape)
+    print("b2", b2.shape)
+    b2 = np.reshape(b2, (-1, 1))
+    #### TODO: sort out shapes
+    # out_in = np.matmul(h1_to_output_weight, h1_out) + b2
     out_in = np.matmul(h1_to_output_weight, h1_out) + b2
+    print("outin", out_in.shape)
     # weights = (100, 10)
     # (100,1)
     # out_out = a3
+    print(out_in.shape)
     out_out = mt.sigmoid(out_in)
     # (10, 1)
     loss = mt.cost(target, out_out)
@@ -106,27 +116,26 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
 
         if i % batch_size == 0:
             print("loss is")
-            print(np.average(loss_layer_out))
-            print("out layer", out_layer_out)
+            print(np.average(loss))
+            print("out layer", out_out)
             print(target)
             print(
                 "wrongness (max 1, min 0): ",
-                np.sum(np.absolute(out_layer_out - target))/10)
+                np.sum(np.absolute(out_out - target))/10)
             # print("out layer in", out_layer_in)
-            lr =0.1
+            lr = 0.1
             input_to_h1_weight = np.subtract(
                 input_to_h1_weight, np.multiply(
                     np.divide(sum_input_h1_weight, batch_size), lr))
             h1_to_output_weight = np.subtract(
-                h1_to_ouput_weight, np.multiply(
+                h1_to_output_weight, np.multiply(
                     np.divide(sum_h1_output_weight, batch_size), lr))
 
             b1 = np.subtract(b1, np.multiply(np.divide(sum_b1, batch_size), lr))
             b2 = np.subtract(b2, np.multiply(np.divide(sum_b2, batch_size), lr))
 
-
             sum_input_h1_weight = np.zeros(input_to_h1_weight.shape)
-            sum_h1_out_weight = np.zeros(h1_to_out_weight.shape)
+            sum_h1_out_weight = np.zeros(h1_to_output_weight.shape)
             sum_b1 = np.zeros(b1.shape)
             sum_b1 = np.zeros(b2.shape)
 
