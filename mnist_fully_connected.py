@@ -28,12 +28,12 @@ for i in range(10):
         pixels = pixels.flatten()
         image_list.append(pixels)
     data_dict[i] = image_list
-print("loaded data")
+# print("loaded data")
 
-input_to_h1_weight = mt.weight_2d(layer1_len, input_len)
+W1 = mt.weight_2d(layer1_len, input_len)
 # we want this to be (100, 784)
 # (784, 100)
-h1_to_output_weight = mt.weight_2d(output_len, layer1_len)
+W2 = mt.weight_2d(output_len, layer1_len)
 # we want this to be (100, 10)
 # (100, 10)
 b1 = mt.bias(layer1_len)
@@ -41,53 +41,54 @@ b1 = mt.bias(layer1_len)
 b2 = mt.bias(output_len)
 # we want this to be (10,1) or (10,) not sure
 
-starting_weights = {"input_to_h1_weight": input_to_h1_weight,
-                    "h1_to_output_weight": h1_to_output_weight}
+starting_weights = {"W1": W1,
+                    "W2": W2}
 starting_bias = {"b1": b1, "b2": b2}
 
 
-def run_model(input_vector, target, input_to_h1_weight, h1_to_output_weight, b1, b2):
+def run_model(input_vector, target, W1, W2, b1, b2):
     # normalise input
-    # input_out =a0
-    input_out = mt.sigmoid(input_vector)
+    # a0 =a0
+    a0 = mt.sigmoid(input_vector)
     # want this to be (784,1)
-
+    # print("run mdel w2", W2.shape)
     # weights = (784, 100)
-    # h1_in = z1
+    # z1 = z1
+    
     b1 = np.reshape(b1, (-1, 1))
 
-    input_out = np.reshape(input_out, (-1, 1))
+    a0 = np.reshape(a0, (-1, 1))
 
-    print("input_out shape (784,1)", input_out.shape)
+    # print("a0 shape (784,1)", a0.shape)
 
-    h1_in = np.matmul(input_to_h1_weight, input_out) + b1
-    # we want h1_in to be (z1 = (100,1))
-    print("h1 in shape (100,1)", h1_in.shape)
+    z1 = np.matmul(W1, a0) + b1
+    # we want z1 to be (z1 = (100,1))
+    # print("h1 in shape (100,1)", z1.shape)
     # (100, 1)
-    # h1_out = a1
-    h1_out = mt.sigmoid(h1_in)
-    h1_out = np.reshape(h1_out, (-1, 1))
+    # a1 = a1
+    a1 = mt.sigmoid(z1)
+    a1 = np.reshape(a1, (-1, 1))
     # we want this to be h1 out = a1 = (100,1)
-    print("h1_out (100, 1)", h1_out.shape)
+    # print("a1 (100, 1)", a1.shape)
     # matmul goes wrong here
-    print("h1 out w (100,100)", h1_to_output_weight.shape)
-    print("b2 (10,1)", b2.shape)
+    # print("w2 shape (10,100)", W2.shape)
+    # print("b2 (10,1)", b2.shape)
     b2 = np.reshape(b2, (-1, 1))
     #### TODO: sort out shapes
-    # out_in = np.matmul(h1_to_output_weight, h1_out) + b2
+    # z2 = np.matmul(W2, a1) + b2
 
-    out_in = np.matmul(h1_to_output_weight, h1_out) + b2
-    # h1_to_output_weight = w2 we want this to be (10, 100)
-    # out_in = z2 we want this to be = (10, 1)
-    print("out_in (10, 1)", out_in.shape)
+    z2 = np.matmul(W2, a1) + b2
+    # W2 = w2 we want this to be (10, 100)
+    # z2 = z2 we want this to be = (10, 1)
+    # print("z2 (10, 1)", z2.shape)
     # weights = (100, 10)
     # (100,1)
-    # out_out = a3
-    out_out = mt.sigmoid(out_in)
+    # a2 = a2
+    a2 = mt.sigmoid(z2)
     # (10, 1)
-    print("out_out (10,10)", out_out.shape)
-    loss = mt.cost(target, out_out)
-    return input_out, h1_in, h1_out, out_in, out_out, loss
+    # print("a2 (10,1)", a2.shape)
+    loss = mt.cost(target, a2)
+    return a0, z1, a1, z2, a2, loss
 
 
 def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
@@ -97,63 +98,66 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
     batch_size = 10
     num_data_in_each = 60
     # starting weights dictionary thing:
-    input_to_h1_weight = starting_weights['input_to_h1_weight']
-    h1_to_output_weight = starting_weights['h1_to_output_weight']
+    W1 = starting_weights['W1']
+    W2 = starting_weights['W2']
+
     b1 = starting_bias['b1']
     b2 = starting_bias['b2']
 
-    sum_input_h1_weight = np.zeros(input_to_h1_weight.shape)
-    sum_h1_out_weight = np.zeros(h1_to_output_weight.shape)
+    sum_w1 = np.zeros(W1.shape)
+    sum_w2 = np.zeros(W2.shape)
     sum_b1 = np.zeros(b1.shape)
     sum_b2 = np.zeros(b2.shape)
-    print("sum sum", sum_b1.shape, sum_b2.shape)
+    # print("sum sum", sum_b1.shape, sum_b2.shape)
     for i in range(iterations):
         # initialise data to input in to model
         randint = np.random.randint(0, high=9)
         input_data = data_dict[randint][i//num_data_in_each]
         target = mt.return_one_hot(randint)
-        input_out, h1_in, h1_out, out_in, out_out, loss = run_model(
+        a0, z1, a1, z2, a2, loss = run_model(
             input_data,
             target,
-            input_to_h1_weight,
-            h1_to_output_weight, b1, b2)
+            W1,
+            W2, b1, b2)
         # compute changes to weights and sum them
-        dw_2, d_b2 = mt.dfinal(target, out_out, out_in, h1_in)
-        print("db2 out", d_b2.shape)
-        d_b2 = np.squeeze(d_b2)
-        print("db2 out2", d_b2.shape)
-        dw_1, d_b1 = mt.dw1(h1_to_output_weight, d_b2, h1_in, input_out)
-        print("d_b1 out", d_b1.shape)
+        # print("a2 shape should be (10,1)", a2.shape)
+        # print("z2 shape should be (10,1)", z2.shape)
+        # print("z1 shape should be (100,1)", z1.shape)
+        dw_2, dz_t2 = mt.dfinal(target, a2, z2, a1)
+        d_b2 = dz_t2
+        # print("db2 out", d_b2.shape)
+        # print("db2 out2", d_b2.shape)
+        dw_1, dz_t1 = mt.dw1(W2, dz_t2, z1, a0)
+        d_b1 = dz_t1
+        # print("d_b1 out", d_b1.shape)
         # dw_2 is derivative of loss function
         # sum changes
-        sum_input_h1_weight = np.add(dw_1, sum_input_h1_weight)
-        sum_h1_output_weight = np.add(dw_2, sum_h1_out_weight)
-        print("sum sum 1", sum_b1.shape, sum_b2.shape)
+        sum_w1 = np.add(dw_1, sum_w1)
+        sum_w2 = np.add(dw_2, sum_w2)
         sum_b1 = np.add(d_b1, sum_b1)
         sum_b2 = np.add(d_b2, sum_b2)
-        print("sum sum 2", sum_b1.shape, sum_b2.shape)
         if i % batch_size == 0:
             print("loss is")
             print(np.average(loss))
-            print("out layer", out_out)
+            print("out layer")
+            print(a2)
             print(target)
             print(
                 "wrongness (max 1, min 0): ",
-                np.sum(np.absolute(out_out - target))/10)
-            # print("out layer in", out_layer_in)
+                np.sum(np.absolute(a2 - target))/10)
             lr = 0.1
-            input_to_h1_weight = np.subtract(
-                input_to_h1_weight, np.multiply(
-                    np.divide(sum_input_h1_weight, batch_size), lr))
-            h1_to_output_weight = np.subtract(
-                h1_to_output_weight, np.multiply(
-                    np.divide(sum_h1_output_weight, batch_size), lr))
-            print(sum_b1.shape, sum_b2.shape)
+            W1 = np.subtract(
+                W1, np.multiply(
+                    np.divide(sum_w1, batch_size), lr))
+            W2 = np.subtract(
+                W2, np.multiply(
+                    np.divide(sum_w2, batch_size), lr))
+            # print(sum_b1.shape, sum_b2.shape)
             b1 = np.subtract(b1, np.multiply(np.divide(sum_b1, batch_size), lr))
             b2 = np.subtract(b2, np.multiply(np.divide(sum_b2, batch_size), lr))
-            print("cc", b2.shape)
-            sum_input_h1_weight = np.zeros(input_to_h1_weight.shape)
-            sum_h1_out_weight = np.zeros(h1_to_output_weight.shape)
+            # print("cc", b2.shape)
+            sum_w1 = np.zeros(W1.shape)
+            sum_w2 = np.zeros(W2.shape)
             sum_b1 = np.zeros(b1.shape)
             sum_b2 = np.zeros(b2.shape)
 
