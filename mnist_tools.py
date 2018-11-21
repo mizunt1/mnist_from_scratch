@@ -154,9 +154,8 @@ def dw1(w_t2, dz_t2, z_t1, a_t0):
     """
     w_t2_trans = np.transpose(w_t2)
     step_one = np.dot(w_t2_trans, dz_t2)
-    print("step one shape shuold be (100,10)", step_one.shape)
-    step_one = np.reshape(step_one, (1, -1))
-    print("step one shape", step_one.shape)
+    step_one = np.reshape(step_one, (-1, 1))
+    print("step one shape shuold be (100,1)", step_one.shape)
     dsigmoid_z = dsigmoid(z_t1)
     dsigmoid_z = np.reshape(dsigmoid_z, (-1, 1))
     print("dsigmoid shape should be (100, 1)", dsigmoid_z.shape)
