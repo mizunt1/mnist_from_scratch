@@ -51,7 +51,11 @@ def run_model(input_vector, target, input_to_h1_weight, h1_to_output_weight, b1,
     # might have to do np.add
     # weights = (784, 100)
     # h1_in = z1
+    b1 = np.reshape(b1, (-1, 1))
+    input_out = np.reshape(input_out, (-1, 1))
+    print(input_out.shape)
     h1_in = np.matmul(input_to_h1_weight, input_out) + b1
+    print("h1 in shape", h1_in.shape)
     # (100, 1)
     # h1_out = a2
     h1_out = mt.sigmoid(h1_in)
@@ -65,6 +69,7 @@ def run_model(input_vector, target, input_to_h1_weight, h1_to_output_weight, b1,
     b2 = np.reshape(b2, (-1, 1))
     #### TODO: sort out shapes
     # out_in = np.matmul(h1_to_output_weight, h1_out) + b2
+
     out_in = np.matmul(h1_to_output_weight, h1_out) + b2
     print("outin", out_in.shape)
     # weights = (100, 10)
@@ -93,7 +98,7 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
     sum_h1_out_weight = np.zeros(h1_to_output_weight.shape)
     sum_b1 = np.zeros(b1.shape)
     sum_b2 = np.zeros(b2.shape)
-
+    print("sum sum", sum_b1.shape, sum_b2.shape)
     for i in range(iterations):
         # initialise data to input in to model
         randint = np.random.randint(0, high=9)
@@ -106,14 +111,19 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
             h1_to_output_weight, b1, b2)
         # compute changes to weights and sum them
         dw_2, d_b2 = mt.dfinal(target, out_out, out_in, h1_in)
-        dw_1, d_b1 = mt.dw1(h1_to_output_weight, out_in, h1_in, input_out)
+        print("db2 out", d_b2.shape)
+        d_b2 = np.squeeze(d_b2)
+        print("db2 out2", d_b2.shape)
+        dw_1, d_b1 = mt.dw1(h1_to_output_weight, d_b2, h1_in, input_out)
+        print("d_b1 out", d_b1.shape)
         # dw_2 is derivative of loss function
         # sum changes
         sum_input_h1_weight = np.add(dw_1, sum_input_h1_weight)
         sum_h1_output_weight = np.add(dw_2, sum_h1_out_weight)
+        print("sum sum 1", sum_b1.shape, sum_b2.shape)
         sum_b1 = np.add(d_b1, sum_b1)
         sum_b2 = np.add(d_b2, sum_b2)
-
+        print("sum sum 2", sum_b1.shape, sum_b2.shape)
         if i % batch_size == 0:
             print("loss is")
             print(np.average(loss))
@@ -130,13 +140,13 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
             h1_to_output_weight = np.subtract(
                 h1_to_output_weight, np.multiply(
                     np.divide(sum_h1_output_weight, batch_size), lr))
-
+            print(sum_b1.shape, sum_b2.shape)
             b1 = np.subtract(b1, np.multiply(np.divide(sum_b1, batch_size), lr))
             b2 = np.subtract(b2, np.multiply(np.divide(sum_b2, batch_size), lr))
-
+            print("cc", b2.shape)
             sum_input_h1_weight = np.zeros(input_to_h1_weight.shape)
             sum_h1_out_weight = np.zeros(h1_to_output_weight.shape)
             sum_b1 = np.zeros(b1.shape)
-            sum_b1 = np.zeros(b2.shape)
+            sum_b2 = np.zeros(b2.shape)
 
 run_back_prop(1000, data_dict, starting_weights, starting_bias)
