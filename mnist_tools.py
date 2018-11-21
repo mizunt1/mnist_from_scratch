@@ -154,14 +154,14 @@ def dw1(w_t2, dz_t2, z_t1, a_t0):
     """
     w_t2_trans = np.transpose(w_t2)
     step_one = np.dot(w_t2_trans, dz_t2)
-    print("step one shape", step_one.shape)
+    print("step one shape shuold be (100,10)", step_one.shape)
     step_one = np.reshape(step_one, (1, -1))
     print("step one shape", step_one.shape)
     dsigmoid_z = dsigmoid(z_t1)
     dsigmoid_z = np.reshape(dsigmoid_z, (-1, 1))
-    print("dsigmoid", dsigmoid_z.shape)
+    print("dsigmoid shape should be (100, 1)", dsigmoid_z.shape)
     dz_t1 = np.multiply(step_one, dsigmoid_z)
-    print("dz_t1", dz_t1.shape)
+    print("dz_t1 should be (100,1)", dz_t1.shape)
     dz_t1 = np.squeeze(dz_t1)
     print("dz_t1", dz_t1.shape)
     a_t0 = np.reshape(a_t0, (1, -1))
@@ -169,7 +169,7 @@ def dw1(w_t2, dz_t2, z_t1, a_t0):
     print("a_t0", a_t0.shape)
     print("dz_t1 shape", dz_t1.shape)
     step1 = np.tile(a_t0, (len(dz_t1), 1))
-    print("a_t0 shape", a_t0.shape)
+    print("a_t0 shape should be (100, 784)", a_t0.shape)
     print("dz_t1 shape", dz_t1.shape)
     for i in range(len(dz_t1)):
         for j in range(len(a_t0)):
