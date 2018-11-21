@@ -31,11 +31,15 @@ for i in range(10):
 print("loaded data")
 
 input_to_h1_weight = mt.weight_2d(layer1_len, input_len)
+# we want this to be (100, 784)
 # (784, 100)
 h1_to_output_weight = mt.weight_2d(output_len, layer1_len)
+# we want this to be (100, 10)
 # (100, 10)
 b1 = mt.bias(layer1_len)
+# we want this to be (100,1) OR (100,) not sure
 b2 = mt.bias(output_len)
+# we want this to be (10,1) or (10,) not sure
 
 starting_weights = {"input_to_h1_weight": input_to_h1_weight,
                     "h1_to_output_weight": h1_to_output_weight}
@@ -44,24 +48,26 @@ starting_bias = {"b1": b1, "b2": b2}
 
 def run_model(input_vector, target, input_to_h1_weight, h1_to_output_weight, b1, b2):
     # normalise input
-    # input_out =a1
+    # input_out =a0
     input_out = mt.sigmoid(input_vector)
+    # want this to be (784,1)
 
-    # (1, 784)
-    # might have to do np.add
     # weights = (784, 100)
     # h1_in = z1
     b1 = np.reshape(b1, (-1, 1))
+
     input_out = np.reshape(input_out, (-1, 1))
+
     print(input_out.shape)
+
     h1_in = np.matmul(input_to_h1_weight, input_out) + b1
+    # we want h1_in to be (z1 = (100,1))
     print("h1 in shape", h1_in.shape)
     # (100, 1)
-    # h1_out = a2
+    # h1_out = a1
     h1_out = mt.sigmoid(h1_in)
     h1_out = np.reshape(h1_out, (-1, 1))
-    # (100,1)
-    # out_in = z2
+    # we want this to be h1 out = a1 = (100,1)
     print("print", h1_out.shape)
     # matmul goes wrong here
     print("h1 out w", h1_to_output_weight.shape)
@@ -71,6 +77,8 @@ def run_model(input_vector, target, input_to_h1_weight, h1_to_output_weight, b1,
     # out_in = np.matmul(h1_to_output_weight, h1_out) + b2
 
     out_in = np.matmul(h1_to_output_weight, h1_out) + b2
+    # h1_to_output_weight = w2 we want this to be (10, 100)
+    # out_in = z2 we want this to be = (10, 1)
     print("outin", out_in.shape)
     # weights = (100, 10)
     # (100,1)
