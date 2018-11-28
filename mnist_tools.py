@@ -30,16 +30,6 @@ def get_pixels(file_name):
     return pixels
 
 
-def relu(x):
-    output = np.zeros(len(x))
-    for i in range(len(x)):
-        if x[i] <= 0:
-            output[i] = 0
-        else:
-            output[i] = x[i]
-    return output
-
-
 def weight_2d(y, x, low=-1, high=1):
     """
     Create a 2d matrix with columns x and rows y filled with random
@@ -53,15 +43,24 @@ def bias(y, low=-1, high=1):
     """
     creates a randomised bias vector
     """
-    vector = np.random.uniform(low=low, high=high, size=(y,1))
-    # vector = np.random.uniform(low=low, high=high, size=(y,1))
+    vector = np.random.uniform(low=low, high=high, size=(y, 1))
     return vector
 
 
 def sigmoid(x):
-    output = np.zeros((len(x),1))
+    output = np.zeros((len(x), 1))
     for i in range(len(x)):
         output[i] = (1+np.exp(-x[i]))**-1
+    return output
+
+
+def relu(x):
+    output = np.zeros((len(x), 1))
+    for i in range(len(x)):
+        if x[i] <= 0:
+            output[i] = 0
+        else:
+            output[i] = x[i]
     return output
 
 
@@ -72,7 +71,7 @@ def sigmoid_single(x):
 
 def dsigmoid(x):
     # print("sinput sigmoid", x.shape)
-    output = np.zeros((len(x),1))
+    output = np.zeros((len(x), 1))
     for i in range(len(x)):
         output[i] = sigmoid_single(x[i])*(1-sigmoid_single(x[i]))
     # print("ouput", output.shape)

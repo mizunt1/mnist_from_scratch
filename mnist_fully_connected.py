@@ -49,7 +49,11 @@ starting_bias = {"b1": b1, "b2": b2}
 def run_model(input_vector, target, W1, W2, b1, b2):
     # normalise input
     # a0 =a0
+
+    # input_vector = input_vector / np.sum(input_vector)
+    # a0 = mt.relu(input_vector)
     a0 = mt.sigmoid(input_vector)
+    # a0 = input_vector
     # want this to be (784,1)
     # print("run mdel w2", W2.shape)
     # weights = (784, 100)
@@ -66,6 +70,7 @@ def run_model(input_vector, target, W1, W2, b1, b2):
     # print("h1 in shape (100,1)", z1.shape)
     # (100, 1)
     # a1 = a1
+    # a1 = mt.relu(z1)
     a1 = mt.sigmoid(z1)
     a1 = np.reshape(a1, (-1, 1))
     # we want this to be h1 out = a1 = (100,1)
@@ -74,7 +79,6 @@ def run_model(input_vector, target, W1, W2, b1, b2):
     # print("w2 shape (10,100)", W2.shape)
     # print("b2 (10,1)", b2.shape)
     b2 = np.reshape(b2, (-1, 1))
-    #### TODO: sort out shapes
     # z2 = np.matmul(W2, a1) + b2
 
     z2 = np.matmul(W2, a1) + b2
@@ -84,6 +88,7 @@ def run_model(input_vector, target, W1, W2, b1, b2):
     # weights = (100, 10)
     # (100,1)
     # a2 = a2
+    # a2 = mt.relu(z2)
     a2 = mt.sigmoid(z2)
     # (10, 1)
     # print("a2 (10,1)", a2.shape)
@@ -109,6 +114,8 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
     sum_b1 = np.zeros(b1.shape)
     sum_b2 = np.zeros(b2.shape)
     # print("sum sum", sum_b1.shape, sum_b2.shape)
+    total_correct = 0
+    check = 0
     for i in range(iterations):
         # initialise data to input in to model
         randint = np.random.randint(0, high=9)
@@ -140,25 +147,28 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
             print("loss is")
             print(np.average(loss))
             print("out layer")
-            print(a2)
-            print(target)
-            print(
-                "wrongness (max 1, min 0): ",
-                np.sum(np.absolute(a2 - target))/10)
+            a2 = np.ndarray.flatten(a2)
+            a2_pred = np.argmax(a2)
+            print("out layer argmax", a2_pred)
+            target = np.ndarray.flatten(target)
+            target = np.argmax(target)
+            print("target argmax", target)
+            if target == a2_pred:
+                total_correct += 1
+                print("correct!!")
+            check += 1
+            total = total_correct / (check)
+            print("correctness: max 1, min 0", total)
             lr = 0.1
-            W1 = np.subtract(
-                W1, np.multiply(
-                    np.divide(sum_w1, batch_size), lr))
-            W2 = np.subtract(
-                W2, np.multiply(
-                    np.divide(sum_w2, batch_size), lr))
+            W1 = W1 - ((sum_w1 / batch_size) * lr)
+            W2 = W2 - ((sum_w2 / batch_size) * lr)
             # print(sum_b1.shape, sum_b2.shape)
-            b1 = np.subtract(b1, np.multiply(np.divide(sum_b1, batch_size), lr))
-            b2 = np.subtract(b2, np.multiply(np.divide(sum_b2, batch_size), lr))
+            b1 = b1 - (sum_b1 / batch_size) * lr
+            b2 = b2 - (sum_b2 / batch_size) * lr
             # print("cc", b2.shape)
             sum_w1 = np.zeros(W1.shape)
             sum_w2 = np.zeros(W2.shape)
             sum_b1 = np.zeros(b1.shape)
             sum_b2 = np.zeros(b2.shape)
 
-run_back_prop(1000, data_dict, starting_weights, starting_bias)
+run_back_prop(10000, data_dict, starting_weights, starting_bias)
