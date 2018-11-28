@@ -105,7 +105,8 @@ def run_model(input_vector, target, W1, W2, b1, b2):
     return a0, z1, a1, z2, a2, loss
 
 
-def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
+def run_back_prop(iterations, data_dict, starting_weights, starting_bias,
+                  checkpoint_load=None, checkpoint_save=False):
     """
     rememebr that this is still for 1D
     """
@@ -117,12 +118,18 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
 
     b1 = starting_bias['b1']
     b2 = starting_bias['b2']
-
+    if checkpoint_load is not None:
+        hf = h5py.File(checkpoint_load, 'r')
+        W1 = hf.get('w1')
+        W2 = hf.get('w2')
+        b1 = hf.get('b1')
+        b2 = hf.get('b2')
     sum_w1 = np.zeros(W1.shape)
     sum_w2 = np.zeros(W2.shape)
     sum_b1 = np.zeros(b1.shape)
     sum_b2 = np.zeros(b2.shape)
     # print("sum sum", sum_b1.shape, sum_b2.shape)
+
     total_correct = 0
     check = 0
     for i in range(iterations):
@@ -168,10 +175,10 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
             check += 1
             total = total_correct / (check)
             print("correctness: max 1, min 0", total)
-            if i % 1000 == 0:
+            if i % 1000 == 0 and (checkpoint_save is True):
                 print("check pointing")
-                filename = "checkpoints/checkpoints" + str(i)
-                checkpoint(W1, W2, b1, b1, filename)
+                filename = "checkpoints/checkpoints" + str(i) + ".h5"
+                checkpoint(W1, W2, b1, b2, filename)
             lr = 0.1
             W1 = W1 - ((sum_w1 / batch_size) * lr)
             W2 = W2 - ((sum_w2 / batch_size) * lr)
@@ -184,6 +191,6 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
             sum_b1 = np.zeros(b1.shape)
             sum_b2 = np.zeros(b2.shape)
 
+run_back_prop(10000, data_dict, starting_weights, starting_bias, checkpoint_load="checkpoints/checkpoints1000.h5")
 
-
-run_back_prop(10000, data_dict, starting_weights, starting_bias)
+# run_back_prop(10000, data_dict, starting_weights, starting_bias, checkpoint_save=True)
