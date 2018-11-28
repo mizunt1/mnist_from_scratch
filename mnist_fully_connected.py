@@ -15,6 +15,12 @@ input_len = 784
 layer1_len = 100
 output_len = 10
 
+import os
+directory = 'checkpoints'
+
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
 import glob
 data_dict = {}
 for i in range(10):
@@ -106,7 +112,7 @@ def run_model(input_vector, target, W1, W2, b1, b2):
 
 
 def run_back_prop(iterations, data_dict, starting_weights, starting_bias,
-                  checkpoint_load=None, checkpoint_save=False):
+                  checkpoint_load=None, checkpoint_save=False, save_interval=1000):
     """
     rememebr that this is still for 1D
     """
@@ -175,9 +181,9 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias,
             check += 1
             total = total_correct / (check)
             print("correctness: max 1, min 0", total)
-            if i % 1000 == 0 and (checkpoint_save is True):
+            if i % save_interval == 0 and (checkpoint_save is True):
                 print("check pointing")
-                filename = "checkpoints/checkpoints" + str(i) + ".h5"
+                filename = os.path.join("checkpoints", "checkpoints" + str(i) + ".h5")
                 checkpoint(W1, W2, b1, b2, filename)
             lr = 0.1
             W1 = W1 - ((sum_w1 / batch_size) * lr)
