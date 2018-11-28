@@ -16,10 +16,6 @@ layer1_len = 100
 output_len = 10
 
 import os
-directory = 'checkpoints'
-
-if not os.path.exists(directory):
-    os.makedirs(directory)
 
 import glob
 data_dict = {}
@@ -58,7 +54,7 @@ def checkpoint(w1, w2, b1, b2, filename):
     h5.create_dataset('w2', data=w2)
     h5.create_dataset('b1', data=b1)
     h5.create_dataset('b2', data=b2)
-    h5.close
+    h5.close()
 
 
 def run_model(input_vector, target, W1, W2, b1, b2):
@@ -112,10 +108,14 @@ def run_model(input_vector, target, W1, W2, b1, b2):
 
 
 def run_back_prop(iterations, data_dict, starting_weights, starting_bias,
-                  checkpoint_load=None, checkpoint_save=False, save_interval=1000):
+                  checkpoint_load=None, checkpoint_save=None, save_interval=1000):
     """
     rememebr that this is still for 1D
     """
+    directory = checkpoint_save
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
     batch_size = 1
     num_data_in_each = 60
     # starting weights dictionary thing:
@@ -126,10 +126,10 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias,
     b2 = starting_bias['b2']
     if checkpoint_load is not None:
         hf = h5py.File(checkpoint_load, 'r')
-        W1 = hf.get('w1')
-        W2 = hf.get('w2')
-        b1 = hf.get('b1')
-        b2 = hf.get('b2')
+        W1 = hf['w1']
+        W2 = hf['w2']
+        b1 = hf['b1']
+        b2 = hf['b2']
     sum_w1 = np.zeros(W1.shape)
     sum_w2 = np.zeros(W2.shape)
     sum_b1 = np.zeros(b1.shape)
@@ -181,9 +181,9 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias,
             check += 1
             total = total_correct / (check)
             print("correctness: max 1, min 0", total)
-            if i % save_interval == 0 and (checkpoint_save is True):
+            if i % save_interval == 0 and (checkpoint_save is not None):
                 print("check pointing")
-                filename = os.path.join("checkpoints", "checkpoints" + str(i) + ".h5")
+                filename = os.path.join(checkpoint_save, "checkpoints" + str(i) + ".h5")
                 checkpoint(W1, W2, b1, b2, filename)
             lr = 0.1
             W1 = W1 - ((sum_w1 / batch_size) * lr)
@@ -196,7 +196,7 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias,
             sum_w2 = np.zeros(W2.shape)
             sum_b1 = np.zeros(b1.shape)
             sum_b2 = np.zeros(b2.shape)
-
-run_back_prop(10000, data_dict, starting_weights, starting_bias, checkpoint_load="checkpoints/checkpoints1000.h5")
+    hf.close()
+run_back_prop(10000, data_dict, starting_weights, starting_bias, checkpoint_load="checkpoints/checkpoints1000.h5", checkpoint_save='checkps')
 
 # run_back_prop(10000, data_dict, starting_weights, starting_bias, checkpoint_save=True)
