@@ -8,7 +8,7 @@
 import numpy as np
 import os
 from PIL import Image
-
+import h5py
 import mnist_tools as mt
 # hyper params
 input_len = 784
@@ -44,6 +44,15 @@ b2 = mt.bias(output_len)
 starting_weights = {"W1": W1,
                     "W2": W2}
 starting_bias = {"b1": b1, "b2": b2}
+
+
+def checkpoint(w1, w2, b1, b2, filename):
+    h5 = h5py.File(filename, 'w')
+    h5.create_dataset('w1', data=w1)
+    h5.create_dataset('w2', data=w2)
+    h5.create_dataset('b1', data=b1)
+    h5.create_dataset('b2', data=b2)
+    h5.close
 
 
 def run_model(input_vector, target, W1, W2, b1, b2):
@@ -159,6 +168,10 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
             check += 1
             total = total_correct / (check)
             print("correctness: max 1, min 0", total)
+            if i % 1000 == 0:
+                print("check pointing")
+                filename = "checkpoints/checkpoints" + str(i)
+                checkpoint(W1, W2, b1, b1, filename)
             lr = 0.1
             W1 = W1 - ((sum_w1 / batch_size) * lr)
             W2 = W2 - ((sum_w2 / batch_size) * lr)
@@ -170,5 +183,7 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
             sum_w2 = np.zeros(W2.shape)
             sum_b1 = np.zeros(b1.shape)
             sum_b2 = np.zeros(b2.shape)
+
+
 
 run_back_prop(10000, data_dict, starting_weights, starting_bias)
