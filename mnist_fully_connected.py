@@ -54,7 +54,7 @@ def run_model(input_vector, target, W1, W2, b1, b2):
     # print("run mdel w2", W2.shape)
     # weights = (784, 100)
     # z1 = z1
-    
+
     b1 = np.reshape(b1, (-1, 1))
 
     a0 = np.reshape(a0, (-1, 1))
@@ -95,7 +95,7 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias):
     """
     rememebr that this is still for 1D
     """
-    batch_size = 10
+    batch_size = 1
     num_data_in_each = 60
     # starting weights dictionary thing:
     W1 = starting_weights['W1']

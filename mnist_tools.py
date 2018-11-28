@@ -3,6 +3,7 @@ from PIL import Image
 import numpy as np
 lr = 0.1
 
+
 def loss2(target, pred):
     init = np.zeros(target.shape)
     i = np.argmax(target)
@@ -11,8 +12,9 @@ def loss2(target, pred):
     init[i] = val
     return init
 
+
 def return_one_hot(integer):
-    blank = np.zeros((10,1))
+    blank = np.zeros((10, 1))
     blank[integer] = 1
     return blank
 
@@ -51,7 +53,7 @@ def bias(y, low=-1, high=1):
     """
     creates a randomised bias vector
     """
-    vector = np.random.uniform(low=low, high=high, size=(y,1)) 
+    vector = np.random.uniform(low=low, high=high, size=(y,1))
     # vector = np.random.uniform(low=low, high=high, size=(y,1))
     return vector
 
