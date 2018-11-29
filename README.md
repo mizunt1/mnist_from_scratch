@@ -1,5 +1,15 @@
 # mnist from scratch
-This repository contains code to categorise a set of mnist jpegs in to their 10 categories using a neural network written in python.
+This repository contains code to categorise a set of mnist jpegs in to their 10 categories using a neural network written in python. Its dependencies are numpy for mathematical functions such as np.exp() and h5py for outputting checkpointing.
+ 
+create a virtual environment for the project, and install numpy and h5py.
+
+```
+$ pip install numpy
+```
+
+```
+$ pip install h5py
+```
 
 ## Data
 In the spirit of doing things from scratch, the starting point of this project is jpegs, which is one of the most widely used image formats.
@@ -19,7 +29,8 @@ Then install kaggle
 $ pip install kaggle
 ```
 
-Now we are able to download the data set from kaggle
+Now we are able to download the data set from kaggle.
+This project relies on the mnist data being categorised in to files named 0 to 9, each containing images of those numbers.
 
 ```
 $ kaggle datasets download -d scolianni/mnistasjpg
