@@ -18,19 +18,25 @@ output_len = 10
 import os
 
 import glob
-data_dict = {}
-for i in range(10):
-    image_list = []
-    file_path = os.path.join('data', 'trainingSet', str(i), '*.jpg')
-    for filename in glob.glob(file_path):
-        im = Image.open(filename)
-        pixels = np.asarray(im.getdata())
-        width, height = im.size
-        pixels = np.reshape(pixels, (width, height))
-        pixels = pixels.flatten()
-        image_list.append(pixels)
-    data_dict[i] = image_list
-# print("loaded data")
+
+
+def create_datadict(file_path):
+    data_dict = {}
+    for i in range(10):
+        image_list = []
+        file_path_is = os.path.join(file_path, str(i), '*.jpg')
+        for filename in glob.glob(file_path_is):
+            im = Image.open(filename)
+            pixels = np.asarray(im.getdata())
+            width, height = im.size
+            pixels = np.reshape(pixels, (width, height))
+            pixels = pixels.flatten()
+            image_list.append(pixels)
+        data_dict[i] = image_list
+    return data_dict
+
+
+
 
 W1 = mt.weight_2d(layer1_len, input_len)
 # we want this to be (100, 784)
@@ -107,17 +113,37 @@ def run_model(input_vector, target, W1, W2, b1, b2):
     return a0, z1, a1, z2, a2, loss
 
 
+def check_testset(W1, W2, b1, b2, file_path="data/testSet", num_files=5):
+    num_correct = 0
+    total = 0
+    data_dict = create_datadict(file_path)
+    for i in range(40):
+        randint = np.random.randint(0, high=9)
+        randchoose = np.random.randint(0, high=num_files)
+        input_data = data_dict[randint][randchoose]
+        target = mt.return_one_hot(randint)
+        a0, z1, a1, z2, a2, loss = run_model(
+            input_data,
+            target,
+            W1,
+            W2, b1, b2)
+        a2 = np.argmax(np.ndarray.flatten(a2))
+        if randint == a2:
+            num_correct += 1
+        total += 1
+    return num_correct, total
+
+
 def run_back_prop(iterations, data_dict, starting_weights, starting_bias,
-                  checkpoint_load=None, checkpoint_save=None, save_interval=1000):
+                  checkpoint_load=None, checkpoint_save=None, save_interval=1000, num_files=3000):
     """
     rememebr that this is still for 1D
     """
     directory = checkpoint_save
-
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    if checkpoint_save is not None:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
     batch_size = 1
-    num_data_in_each = 60
     # starting weights dictionary thing:
     W1 = starting_weights['W1']
     W2 = starting_weights['W2']
@@ -141,7 +167,8 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias,
     for i in range(iterations):
         # initialise data to input in to model
         randint = np.random.randint(0, high=9)
-        input_data = data_dict[randint][i//num_data_in_each]
+        randchoose = np.random.randint(0, high=num_files)
+        input_data = data_dict[randint][randchoose]
         target = mt.return_one_hot(randint)
         a0, z1, a1, z2, a2, loss = run_model(
             input_data,
@@ -166,9 +193,7 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias,
         sum_b1 = np.add(d_b1, sum_b1)
         sum_b2 = np.add(d_b2, sum_b2)
         if i % batch_size == 0:
-            print("loss is")
             print(np.average(loss))
-            print("out layer")
             a2 = np.ndarray.flatten(a2)
             a2_pred = np.argmax(a2)
             print("out layer argmax", a2_pred)
@@ -180,7 +205,11 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias,
                 print("correct!!")
             check += 1
             total = total_correct / (check)
-            print("correctness: max 1, min 0", total)
+            print("correctness training set (cumulative): max 1, min 0", total)
+            if i % 200 == 0:
+                num_correct_test, total_test = check_testset(W1, W2, b1, b2)
+                print("~~~~correctness test set: max 1, min 0", num_correct_test/total_test)
+                print("correct guesses: ", num_correct_test, "out of: ", total_test)
             if i % save_interval == 0 and (checkpoint_save is not None):
                 print("check pointing")
                 filename = os.path.join(checkpoint_save, "checkpoints" + str(i) + ".h5")
@@ -196,7 +225,12 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias,
             sum_w2 = np.zeros(W2.shape)
             sum_b1 = np.zeros(b1.shape)
             sum_b2 = np.zeros(b2.shape)
+    num_correct_test, total_test = check_testset(W1, W2, b1, b2)
+    print("~~~~correctness test set: max 1, min 0", num_correct_test/total_test)
+    print("correct guesses: ", num_correct_test, "out of: ", total_test)
     hf.close()
-run_back_prop(10000, data_dict, starting_weights, starting_bias, checkpoint_load="checkpoints/checkpoints1000.h5", checkpoint_save='checkps')
+data_dict = create_datadict('data/trainingSet')
+
+run_back_prop(10000, data_dict, starting_weights, starting_bias, checkpoint_save="check6", checkpoint_load='check5/checkpoints9000.h5')
 
 # run_back_prop(10000, data_dict, starting_weights, starting_bias, checkpoint_save=True)
