@@ -1,10 +1,11 @@
 # mnist from scratch
 This repository contains code to categorise a set of mnist jpegs in to their 10 categories using a neural network. The code is written in python. Its dependencies are numpy for mathematical functions such as np.exp() and h5py for outputting checkpointing.
 
-This project to explore the mathematical foundations of back-propagation and gradient descent. The mathematics used in the code can be summarised by four equations which can be found on [Michael Nielsens blog](http://neuralnetworksanddeeplearning.com/chap2.html)
+This project to explore the mathematical foundations of back-propagation and gradient descent. The mathematics used in the code can be summarised by four equations which can be found on [Michael Nielsens blog](http://neuralnetworksanddeeplearning.com/chap2.html).
 
 ![equations](/images/tikz21.png?raw=true)
 
+## Setting up
  
 create a virtual environment for the project, and install numpy and h5py.
 
@@ -41,3 +42,7 @@ This project relies on the mnist data being categorised in to files named 0 to 9
 $ kaggle datasets download -d scolianni/mnistasjpg
 ```
 
+## Run the training
+```
+$ python mnist_fully_connected.py
+```
