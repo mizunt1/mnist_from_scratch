@@ -1,5 +1,11 @@
 # mnist from scratch
-This repository contains code to categorise a set of mnist jpegs in to their 10 categories using a neural network written in python. Its dependencies are numpy for mathematical functions such as np.exp() and h5py for outputting checkpointing.
+This repository contains code to categorise a set of mnist jpegs in to their 10 categories using a neural network. The code is written in python. Its dependencies are numpy for mathematical functions such as np.exp() and h5py for outputting checkpointing.
+
+This project to explore the mathematical foundations of back-propagation and gradient descent. The mathematics used in the code can be summarised by four equations which can be found on [Michael Nielsens blog](http://neuralnetworksanddeeplearning.com/chap2.html)
+
+
+
+
  
 create a virtual environment for the project, and install numpy and h5py.
 
