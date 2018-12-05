@@ -3,8 +3,7 @@ This repository contains code to categorise a set of mnist jpegs in to their 10 
 
 This project to explore the mathematical foundations of back-propagation and gradient descent. The mathematics used in the code can be summarised by four equations which can be found on [Michael Nielsens blog](http://neuralnetworksanddeeplearning.com/chap2.html)
 
-
-
+![equations](/images/tikz21.png?raw=true)
 
  
 create a virtual environment for the project, and install numpy and h5py.
