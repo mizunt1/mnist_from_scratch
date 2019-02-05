@@ -19,7 +19,6 @@ import os
 
 import glob
 
-
 def create_datadict(file_path):
     data_dict = {}
     for i in range(10):
@@ -232,5 +231,3 @@ def run_back_prop(iterations, data_dict, starting_weights, starting_bias,
 data_dict = create_datadict('data/trainingSet')
 
 run_back_prop(10000, data_dict, starting_weights, starting_bias, checkpoint_save="check6", checkpoint_load='check5/checkpoints9000.h5')
-
-# run_back_prop(10000, data_dict, starting_weights, starting_bias, checkpoint_save=True)
