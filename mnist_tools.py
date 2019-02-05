@@ -4,8 +4,17 @@ import numpy as np
 lr = 0.1
 
 
+def loss2(target, pred):
+    init = np.zeros(target.shape)
+    i = np.argmax(target)
+    pred_idx = pred[i]
+    val = np.log(pred_idx)
+    init[i] = val
+    return init
+
+
 def return_one_hot(integer):
-    blank = np.zeros(10)
+    blank = np.zeros((10, 1))
     blank[integer] = 1
     return blank
 
@@ -21,16 +30,6 @@ def get_pixels(file_name):
     return pixels
 
 
-def relu(x):
-    output = np.zeros(len(x))
-    for i in range(len(x)):
-        if x[i] <= 0:
-            output[i] = 0
-        else:
-            output[i] = x[i]
-    return output
-
-
 def weight_2d(y, x, low=-1, high=1):
     """
     Create a 2d matrix with columns x and rows y filled with random
@@ -44,14 +43,24 @@ def bias(y, low=-1, high=1):
     """
     creates a randomised bias vector
     """
-    vector = np.random.uniform(low=low, high=high, size=(y))
+    vector = np.random.uniform(low=low, high=high, size=(y, 1))
     return vector
 
 
 def sigmoid(x):
-    output = np.zeros(len(x))
+    output = np.zeros((len(x), 1))
     for i in range(len(x)):
         output[i] = (1+np.exp(-x[i]))**-1
+    return output
+
+
+def relu(x):
+    output = np.zeros((len(x), 1))
+    for i in range(len(x)):
+        if x[i] <= 0:
+            output[i] = 0
+        else:
+            output[i] = x[i]
     return output
 
 
@@ -61,9 +70,11 @@ def sigmoid_single(x):
 
 
 def dsigmoid(x):
-    output = np.zeros(len(x))
+    # print("sinput sigmoid", x.shape)
+    output = np.zeros((len(x), 1))
     for i in range(len(x)):
         output[i] = sigmoid_single(x[i])*(1-sigmoid_single(x[i]))
+    # print("ouput", output.shape)
     return output
 
 
@@ -122,95 +133,71 @@ def dloss(target, input):
         loss[i] = -1*(target[i]*(1/input[i]) + (1-target[i])*(1/(1-input[i])))
     return loss
 
-def hidden_to_final(weights, output_vals_h2, output_vals_f, out_layer_in, target_vals, lr=lr):
 
+def dloss2(target, pred):
+    init = np.zeros(target.shape)
+    idx = np.argmax(target)
+    val=1 / pred[idx]
+    init[idx] = val
+    return init
+
+
+def cost(target, pred):
+    out = (pred-target)**2
+    num_items = len(target)
+    out = sum(out) / (2*num_items)
+    return out
+
+
+def dw1(w_t2, dz_t2, z_t1, a_t0):
     """
-    Outputs the optimised weight values for the hidden to final layer of the
-    network. The weights should then be replaced by the output of this fn
-    Assumed softmax is used in final layer. TODO: Change this to supply options
-    for different activation fns
-    :params weights: 2D weights matrix of the current weights which are under
-     optimisation should be of dimensions (prev number of nodes, current number of nodes)
-    :params biases: 1D vector of biases (current number of nodes)
-    :params output_vals_h: 1D vector, output of the hidden layer. (prev number of
-     nodes)
-    :params output_vals_f: 1D vector, output of final layer.
-    :params target_vals: vector of target values 1D.
-    :params lr: learning rate
-    :returns: updated weights which should be used to optimise network
+    w_t2: weights of layer above the layer on interest
+    dz_t2: dC/dz of layer above tha layer on interest
+    z_t1: dC/dz of layer of interst
+    a_t0: a of layer below the layer of interest
     """
+    w_t2_trans = np.transpose(w_t2)
+    # print("w_t2_trans should be (100,10)", w_t2_trans.shape)
+    # print("dz_t2 should be (100,1)", dz_t2.shape )
+    step_one = np.dot(w_t2_trans, dz_t2)
+    step_one = np.reshape(step_one, (-1, 1))
+    # print("step one shape shuold be (100,1)", step_one.shape)
+    dsigmoid_z = dsigmoid(z_t1)
+    # print("dsigmoid shape should be (100, 1)", dsigmoid_z.shape)
+    dz_t1 = np.multiply(step_one, dsigmoid_z)
+    # print("dz_t1 should be (100,1)", dz_t1.shape)
+    # print("a_t0 should be (784,1)", a_t0.shape)
+    a_t0_sq = np.squeeze(a_t0)
+    dz_t1_sq = np.squeeze(dz_t1)
+    # print("a_t0_sq shape should be (784,)", a_t0_sq.shape)
+    # print("dz_t1_sq shape (100,)", dz_t1_sq.shape)
+    frame = np.tile(a_t0_sq, (len(dz_t1_sq),1))
+    for i in range(len(dz_t1_sq)):
+        for j in range(len(a_t0)):
+            frame[i][j] = a_t0[j][0] * dz_t1[i][0]
+    dw_t1 = frame
 
-    dEz_dOz = dloss(target_vals, output_vals_f)
-    dOoutz_dOinz = dsoftmax(out_layer_in)
-    dOinz_dWyz = np.zeros((len(output_vals_h2), len(output_vals_f)))
-    for i in range(len(output_vals_h2)):
-        for j in range(len(output_vals_f)):
-            dOinz_dWyz[j] = output_vals_h2[i]
-    # element wise multiplication of first two terms calculated
-    # print("shape dEz_dOz", dEz_dOz.shape)
-    # print("shape dOoutz_dOinz", dOoutz_dOinz.shape)
-    first_two = np.multiply(dEz_dOz, dOoutz_dOinz)
-    first_two_reshaped = np.reshape(first_two, (1,-1))
-    # print("first_two_reshaped.shape", first_two_reshaped.shape)
-    dw = np.multiply(first_two_reshaped, dOinz_dWyz)
-    # print("dw shape", dw.shape)
-    new_weights = weights - lr*dw
-    return dw
+    # note dz_t1 is the same as db_t1 bias change for layer of interest
+    return dw_t1, dz_t1
 
 
-def hidden_1_to_hidden_2(weights, weightyz, input_vals_h1, output_vals_h1, h2_in,
-                         output_vals_h2, input_vals_O, output_vals_O, lr=lr):
-    dh2Oy_dh2iny = dsoftmax(h2_in)
-    dh2iny_dWxy = np.zeros((len(output_vals_h1), len(output_vals_h2)))
-    for i in range(len(output_vals_h1)):
-        for j in range(len(output_vals_h2)):
-            dh2iny_dWxy[j] = output_vals_h1[i]
-    #dEtotal_h2outy vector of len y
-    dE1_dOouty = dsigmoid(output_vals_O)
-    dOout1_dOin1 = dsoftmax(input_vals_O)
-    mult_with_w = np.multiply(dE1_dOouty, dOout1_dOin1)
-    mult_with_w_reshaped = np.reshape(mult_with_w, (1,-1))
-    to_be_1d = np.multiply(weightyz, mult_with_w_reshaped)
-    dEtotal_h2outy = np.sum(to_be_1d, axis=1)
-    dEtotal_h2outy = np.reshape(dEtotal_h2outy, (1, -1))
-    first_two_terms = np.multiply(dh2Oy_dh2iny, dEtotal_h2outy)
-    dw = np.multiply(dh2iny_dWxy, first_two_terms)
-    new_weights = weights - lr*dw
-    return dw, dEtotal_h2outy
-    # element wise multiplication of first two terms calculate
-
-def input_to_hidden_1(weights, weightxy, output_vals_I, input_vals_h2, input_vals_h1,
-                      dEtotal_h2outy, lr=lr):
-    # relu activation
-    dh1outx_dh1inx = np.ones(len(input_vals_h1))
-    dh1outx_dh1inx = np.reshape(dh1outx_dh1inx, (1, -1))
-    dh1inx_dWwx = np.reshape(output_vals_I, (-1, 1))
-    # print("dh1inx_dWwx", dh1inx_dWwx.shape)
-    output_vals_I_2d = np.tile(dh1inx_dWwx, (1, len(input_vals_h1)))
-    # print("output vals 2d", output_vals_I_2d.shape)
-    dh1inx_dWwx = np.rollaxis(output_vals_I_2d, 1)
-    # third term
-    Wxx = np.zeros(len(weightxy))
-    # not entirely sure if this following bit is correct
-    for i in range(len(weightxy)-20):
-        Wxx[i] = weightxy[i][i]
-    Wxx = np.reshape(Wxx, (-1,1))
-    # # print("wxx", Wxx.shape)
-    dh2outy_dh2iny = dsigmoid(input_vals_h2)
-    dh2outy_dh2iny = np.reshape(dh2outy_dh2iny, (-1, 1))
-    # # print("dh2outy_dh2iny", dh2outy_dh2iny.shape)
-    dEtotal_h2outy = np.reshape(dEtotal_h2outy, (-1, 1))
-    # # print("dE", dEtotal_h2outy.shape)
-    # first term
-    dEtotal_dh1outx = np.multiply(dEtotal_h2outy, dh2outy_dh2iny, Wxx)
-    dh1outx_dh1inx = np.reshape(dh1outx_dh1inx, (-1,1))
-    # # print("dEtotal_dh1outx", dEtotal_dh1outx.shape)
-    # # print("sss", dEtotal_dh1outx.shape, dh1outx_dh1inx.shape)
-    first_two = np.multiply(dEtotal_dh1outx, dh1outx_dh1inx)
-    # # print("first two", first_two.shape)
-    dw = np.multiply(first_two, dh1inx_dWwx)
-    dw = np.rollaxis(dw, 1)
-    # # print("dw", dw.shape)
-    # # print("weights shape", weights.shape)
-    new_weights = weights - lr*dw
-    return dw
+def dfinal(target, pred, z2, a1):
+    # print("target", target.shape)
+    # print("pred", pred.shape)
+    diff = (pred - target)
+    # print("diff shuold be (10,1)", diff.shape)
+    dz = np.multiply(diff, dsigmoid(z2))
+    # print("dsignmoid should be (10,1)", dz.shape)
+    # print("dz shape should be (10,1)")
+    a1_sq = np.squeeze(a1)
+    dz_sq = np.squeeze(dz)
+    frame = np.tile(a1_sq, (len(dz_sq),1))
+    # print("a1_sq", a1_sq.shape)
+    # print("dz_sq", dz_sq.shape)
+    # print("frame shape should be (10, 100)", frame.shape)
+    for i in range(len(dz_sq)):
+        for j in range(len(a1_sq)):
+            frame[i][j] = a1_sq[j] * dz_sq[i]
+    dw = frame
+    # print("dz out", dz.shape)
+    return dw, dz

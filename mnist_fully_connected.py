@@ -8,112 +8,226 @@
 import numpy as np
 import os
 from PIL import Image
-
+import h5py
 import mnist_tools as mt
 # hyper params
 input_len = 784
 layer1_len = 100
 output_len = 10
 
+import os
+
 import glob
-data_dict = {}
-for i in range(10):
-    image_list = []
-    file_path = os.path.join('data', 'trainingSet', str(i), '*.jpg')
-    for filename in glob.glob(file_path):
-        im = Image.open(filename)
-        pixels = np.asarray(im.getdata())
-        width, height = im.size
-        pixels = np.reshape(pixels, (width, height))
-        pixels = pixels.flatten()
-        image_list.append(pixels)
-    data_dict[i] = image_list
-print("loaded data")
 
-h1_to_out_weight = mt.weight_2d(layer1_len, output_len)
-
-layer1_bias = mt.bias(layer1_len)
+def create_datadict(file_path):
+    data_dict = {}
+    for i in range(10):
+        image_list = []
+        file_path_is = os.path.join(file_path, str(i), '*.jpg')
+        for filename in glob.glob(file_path_is):
+            im = Image.open(filename)
+            pixels = np.asarray(im.getdata())
+            width, height = im.size
+            pixels = np.reshape(pixels, (width, height))
+            pixels = pixels.flatten()
+            image_list.append(pixels)
+        data_dict[i] = image_list
+    return data_dict
 
 
-def run_model(input_vector, target, input_to_h1_weight, h1_to_h2_weight,
-              h2_to_out_weight):
-    input_out = input_vector / np.sum(input_vector)
-    h1_in = np.matmul(input_out, input_to_h1_weight)
-    h1_out = mt.relu(h1_in)
-    # print("h1_out", h1_out)
-    h2_in = np.matmul(h1_out, h1_to_h2_weight)
-    # print("h2_in", h2_in)
-    h2_out = mt.sigmoid(h2_in)
-    # print("h2 out", h2_out)
-    out_layer_in = np.matmul(h2_out, h2_to_out_weight)
-    # print("out layer in", out_layer_in)
-    out_layer_in = out_layer_in /np.sum(out_layer_in)
-    out_layer_out = mt.softmax(out_layer_in)
-    # print("out_layer_out", out_layer_out)
-    out_layer_out_norm = out_layer_out / np.sum(out_layer_out)
-    # print("out layer norm", out_layer_out_norm)
-    loss_layer_out = mt.loss(target, out_layer_out_norm)
-    # # print("loss", loss_layer_out)
-    return input_out, h1_in, h1_out, h2_in, h2_out, out_layer_in, loss_layer_out, out_layer_out_norm
 
 
-def run_back_prop(iterations, data_dict, starting_weights):
+W1 = mt.weight_2d(layer1_len, input_len)
+# we want this to be (100, 784)
+# (784, 100)
+W2 = mt.weight_2d(output_len, layer1_len)
+# we want this to be (100, 10)
+# (100, 10)
+b1 = mt.bias(layer1_len)
+# we want this to be (100,1) OR (100,) not sure
+b2 = mt.bias(output_len)
+# we want this to be (10,1) or (10,) not sure
+
+starting_weights = {"W1": W1,
+                    "W2": W2}
+starting_bias = {"b1": b1, "b2": b2}
+
+
+def checkpoint(w1, w2, b1, b2, filename):
+    h5 = h5py.File(filename, 'w')
+    h5.create_dataset('w1', data=w1)
+    h5.create_dataset('w2', data=w2)
+    h5.create_dataset('b1', data=b1)
+    h5.create_dataset('b2', data=b2)
+    h5.close()
+
+
+def run_model(input_vector, target, W1, W2, b1, b2):
+    # normalise input
+    # a0 =a0
+
+    # input_vector = input_vector / np.sum(input_vector)
+    # a0 = mt.relu(input_vector)
+    a0 = mt.sigmoid(input_vector)
+    # a0 = input_vector
+    # want this to be (784,1)
+    # print("run mdel w2", W2.shape)
+    # weights = (784, 100)
+    # z1 = z1
+
+    b1 = np.reshape(b1, (-1, 1))
+
+    a0 = np.reshape(a0, (-1, 1))
+
+    # print("a0 shape (784,1)", a0.shape)
+
+    z1 = np.matmul(W1, a0) + b1
+    # we want z1 to be (z1 = (100,1))
+    # print("h1 in shape (100,1)", z1.shape)
+    # (100, 1)
+    # a1 = a1
+    # a1 = mt.relu(z1)
+    a1 = mt.sigmoid(z1)
+    a1 = np.reshape(a1, (-1, 1))
+    # we want this to be h1 out = a1 = (100,1)
+    # print("a1 (100, 1)", a1.shape)
+    # matmul goes wrong here
+    # print("w2 shape (10,100)", W2.shape)
+    # print("b2 (10,1)", b2.shape)
+    b2 = np.reshape(b2, (-1, 1))
+    # z2 = np.matmul(W2, a1) + b2
+
+    z2 = np.matmul(W2, a1) + b2
+    # W2 = w2 we want this to be (10, 100)
+    # z2 = z2 we want this to be = (10, 1)
+    # print("z2 (10, 1)", z2.shape)
+    # weights = (100, 10)
+    # (100,1)
+    # a2 = a2
+    # a2 = mt.relu(z2)
+    a2 = mt.sigmoid(z2)
+    # (10, 1)
+    # print("a2 (10,1)", a2.shape)
+    loss = mt.cost(target, a2)
+    return a0, z1, a1, z2, a2, loss
+
+
+def check_testset(W1, W2, b1, b2, file_path="data/testSet", num_files=5):
+    num_correct = 0
+    total = 0
+    data_dict = create_datadict(file_path)
+    for i in range(40):
+        randint = np.random.randint(0, high=9)
+        randchoose = np.random.randint(0, high=num_files)
+        input_data = data_dict[randint][randchoose]
+        target = mt.return_one_hot(randint)
+        a0, z1, a1, z2, a2, loss = run_model(
+            input_data,
+            target,
+            W1,
+            W2, b1, b2)
+        a2 = np.argmax(np.ndarray.flatten(a2))
+        if randint == a2:
+            num_correct += 1
+        total += 1
+    return num_correct, total
+
+
+def run_back_prop(iterations, data_dict, starting_weights, starting_bias,
+                  checkpoint_load=None, checkpoint_save=None, save_interval=1000, num_files=3000):
     """
     rememebr that this is still for 1D
     """
-    batch_size = 10
-    num_data_in_each = 60
+    directory = checkpoint_save
+    if checkpoint_save is not None:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+    batch_size = 1
     # starting weights dictionary thing:
-    input_to_h1_weight = starting_weights['input_to_h1_weight']
-    h1_to_h2_weight = starting_weights['h1_to_h2_weight']
-    h2_to_out_weight = starting_weights['h2_to_out_weight']
-    sum_h2_out_weight = np.zeros(h2_to_out_weight.shape)
-    sum_h1_h2_weight = np.zeros(h1_to_h2_weight.shape)
-    sum_input_h1_weight = np.zeros(input_to_h1_weight.shape)
-    correct = 0
+    W1 = starting_weights['W1']
+    W2 = starting_weights['W2']
+
+    b1 = starting_bias['b1']
+    b2 = starting_bias['b2']
+    if checkpoint_load is not None:
+        hf = h5py.File(checkpoint_load, 'r')
+        W1 = hf['w1']
+        W2 = hf['w2']
+        b1 = hf['b1']
+        b2 = hf['b2']
+    sum_w1 = np.zeros(W1.shape)
+    sum_w2 = np.zeros(W2.shape)
+    sum_b1 = np.zeros(b1.shape)
+    sum_b2 = np.zeros(b2.shape)
+    # print("sum sum", sum_b1.shape, sum_b2.shape)
+
+    total_correct = 0
+    check = 0
     for i in range(iterations):
+        # initialise data to input in to model
         randint = np.random.randint(0, high=9)
-        input_data = data_dict[randint][i//num_data_in_each]
+        randchoose = np.random.randint(0, high=num_files)
+        input_data = data_dict[randint][randchoose]
         target = mt.return_one_hot(randint)
-        input_layer, h1_in, h1_out, h2_in, h2_out, out_layer_in, loss_layer_out, out_layer_out = run_model(
+        a0, z1, a1, z2, a2, loss = run_model(
             input_data,
             target,
-            input_to_h1_weight,
-            h1_to_h2_weight,
-            h2_to_out_weight)
-
-        d_h2_to_out_weight = mt.hidden_to_final(
-            h2_to_out_weight, h2_out, out_layer_out, out_layer_in, target)
-        d_h1_to_h2_weight, dEtotal_h2outy = mt.hidden_1_to_hidden_2(
-            h1_to_h2_weight, h2_to_out_weight, h1_in, h1_out, h2_in, h2_out, out_layer_in, out_layer_out)
-        d_input_to_h1_weight = mt.input_to_hidden_1(
-            input_to_h1_weight, h1_to_h2_weight, input_layer, h2_in, h1_in, dEtotal_h2outy)
-
-        sum_h2_out_weight = np.add(d_h2_to_out_weight, sum_h2_out_weight)
-        sum_h1_h2_weight = np.add(d_h1_to_h2_weight, sum_h1_h2_weight)
-        sum_input_h1_weight = np.add(d_input_to_h1_weight, sum_input_h1_weight)
-
+            W1,
+            W2, b1, b2)
+        # compute changes to weights and sum them
+        # print("a2 shape should be (10,1)", a2.shape)
+        # print("z2 shape should be (10,1)", z2.shape)
+        # print("z1 shape should be (100,1)", z1.shape)
+        dw_2, dz_t2 = mt.dfinal(target, a2, z2, a1)
+        d_b2 = dz_t2
+        # print("db2 out", d_b2.shape)
+        # print("db2 out2", d_b2.shape)
+        dw_1, dz_t1 = mt.dw1(W2, dz_t2, z1, a0)
+        d_b1 = dz_t1
+        # print("d_b1 out", d_b1.shape)
+        # dw_2 is derivative of loss function
+        # sum changes
+        sum_w1 = np.add(dw_1, sum_w1)
+        sum_w2 = np.add(dw_2, sum_w2)
+        sum_b1 = np.add(d_b1, sum_b1)
+        sum_b2 = np.add(d_b2, sum_b2)
         if i % batch_size == 0:
-            print("loss is")
-            print(np.average(loss_layer_out))
-            print("out layer", out_layer_out)
-            print(target)
-            print(
-                "wrongness (max 1, min 0): ", np.sum(np.absolute(out_layer_out - target))/10)
-            # print("out layer in", out_layer_in)
-            if np.argmax(out_layer_out) == np.argmax(target):
-                correct += 1
+            print(np.average(loss))
+            a2 = np.ndarray.flatten(a2)
+            a2_pred = np.argmax(a2)
+            print("out layer argmax", a2_pred)
+            target = np.ndarray.flatten(target)
+            target = np.argmax(target)
+            print("target argmax", target)
+            if target == a2_pred:
+                total_correct += 1
+                print("correct!!")
+            check += 1
+            total = total_correct / (check)
+            print("correctness training set (cumulative): max 1, min 0", total)
+            if i % 200 == 0:
+                num_correct_test, total_test = check_testset(W1, W2, b1, b2)
+                print("~~~~correctness test set: max 1, min 0", num_correct_test/total_test)
+                print("correct guesses: ", num_correct_test, "out of: ", total_test)
+            if i % save_interval == 0 and (checkpoint_save is not None):
+                print("check pointing")
+                filename = os.path.join(checkpoint_save, "checkpoints" + str(i) + ".h5")
+                checkpoint(W1, W2, b1, b2, filename)
             lr = 0.1
-            input_to_h1_weight = np.subtract(
-                input_to_h1_weight, np.multiply(np.divide(sum_input_h1_weight, batch_size), lr))
-            h1_to_h2_weight = np.subtract(
-                h1_to_h2_weight, np.multiply(np.divide(sum_h1_h2_weight, batch_size), lr))
-            h2_to_out_weight = np.subtract(
-                h2_to_out_weight, np.multiply(np.divide(sum_h2_out_weight, batch_size), lr))
-            sum_h2_out_weight = np.zeros(h2_to_out_weight.shape)
-            sum_h1_h2_weight = np.zeros(h1_to_h2_weight.shape)
-            sum_input_h1_weight = np.zeros(input_to_h1_weight.shape)
-            print(correct)
-    print("correct: max 1, min 0:", correct/(iterations/batch_size))
+            W1 = W1 - ((sum_w1 / batch_size) * lr)
+            W2 = W2 - ((sum_w2 / batch_size) * lr)
+            # print(sum_b1.shape, sum_b2.shape)
+            b1 = b1 - (sum_b1 / batch_size) * lr
+            b2 = b2 - (sum_b2 / batch_size) * lr
+            # print("cc", b2.shape)
+            sum_w1 = np.zeros(W1.shape)
+            sum_w2 = np.zeros(W2.shape)
+            sum_b1 = np.zeros(b1.shape)
+            sum_b2 = np.zeros(b2.shape)
+    num_correct_test, total_test = check_testset(W1, W2, b1, b2)
+    print("~~~~correctness test set: max 1, min 0", num_correct_test/total_test)
+    print("correct guesses: ", num_correct_test, "out of: ", total_test)
+    hf.close()
+data_dict = create_datadict('data/trainingSet')
 
-run_back_prop(1000, data_dict, starting_weights)
+run_back_prop(10000, data_dict, starting_weights, starting_bias, checkpoint_save="check6", checkpoint_load='check5/checkpoints9000.h5')
