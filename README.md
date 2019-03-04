@@ -5,7 +5,7 @@ This project's aim is to explore the mathematical foundations of back-propagatio
 
 Notation:
 
-The error of neuron j in layer l is given by:
+The "error" of neuron j in layer l, represented by delta is defined as:
 
 ![equations](/images/error_eq.png)
 
