@@ -11,6 +11,8 @@ where Z is:
 
 ![equations](/images/z_eq.png)
 
+Note: when the activation function is applied to Z_l, it then becomes the activation for layer l
+
 
 
 ![equations](/images/tikz21.png?raw=true)
