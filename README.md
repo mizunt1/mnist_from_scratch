@@ -3,6 +3,8 @@ This repository contains code to categorise a set of mnist jpegs in to their 10 
 
 This project's aim is to explore the mathematical foundations of back-propagation and gradient descent. The mathematics used in the code can be summarised by four equations which can be found on [Michael Nielsens blog](http://neuralnetworksanddeeplearning.com/chap2.html).
 
+Notation:
+
 The error of neuron j in layer l is given by:
 
 ![equations](/images/error_eq.png)
